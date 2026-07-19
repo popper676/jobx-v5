@@ -13,11 +13,11 @@ export default function NotFound() {
           This page may have moved, or the link is no longer available.
         </p>
         <Link
-          to="/"
+          to="/dashboard"
           className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#014BAA] text-white text-sm font-semibold hover:bg-[#013b86] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to home
+          Back to workspace
         </Link>
       </div>
     </div>

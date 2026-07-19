@@ -1,10 +1,11 @@
 import React, { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, BookmarkCheck, Clock3, DollarSign, MapPin, Network, ShieldCheck, Users } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Clock3, DollarSign, MapPin, Network, Users } from 'lucide-react';
 import type { Job } from '../data';
 import { useStore } from '../store/StoreProvider';
 import UserAvatar from './UserAvatar';
 import { getJobIntelligence } from '../services/careerIntelligenceService';
+import JobTrustSignals from './JobTrustSignals';
 
 const JobCard: FC<{ job: Job; variant?: 'default' | 'compact' }> = ({ job, variant = 'default' }) => {
   const navigate = useNavigate();
@@ -59,9 +60,9 @@ const JobCard: FC<{ job: Job; variant?: 'default' | 'compact' }> = ({ job, varia
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eef4ff] px-2.5 py-1 text-[0.7rem] font-extrabold text-[#0c3e9e] dark:bg-blue-950/60 dark:text-blue-200"><Network aria-hidden="true" className="h-3.5 w-3.5" />{matchScore}% · {intelligence.label}</span>
-        {job.easyApply && <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[0.7rem] font-extrabold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"><ShieldCheck className="h-3.5 w-3.5" />Response commitment</span>}
         {job.promoted && <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[0.7rem] font-extrabold text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">Featured</span>}
       </div>
+      <div className="mt-3"><JobTrustSignals job={job} /></div>
 
       <div className="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800">
         <div className="flex flex-wrap gap-1.5">{job.skillsRequired.slice(0, 3).map((skill) => <span key={skill} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">{skill}</span>)}{job.skillsRequired.length > 3 && <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">+{job.skillsRequired.length - 3}</span>}</div>

@@ -111,7 +111,7 @@ export default function SignUp() {
             transition={{ delay: 0.4 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="w-full mt-6 flex items-center justify-center gap-2 py-3 px-4 rounded-xl shadow-md shadow-blue-500/25 text-sm font-medium text-white gradient-primary transition-colors"
           >
             Start Exploring <ArrowRight className="w-4 h-4" />

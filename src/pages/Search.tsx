@@ -238,14 +238,6 @@ const JobListCard = ({
           <span className="text-[12px] text-gray-500 flex items-center gap-1">
             <Users className="w-3 h-3" /> {job.applicants} applicants
           </span>
-          {job.connectionsAtCompany && job.connectionsAtCompany > 0 && (
-            <>
-              <span className="text-gray-300 text-[11px]">·</span>
-              <span className="text-[12px] text-[#014BAA] font-medium flex items-center gap-1">
-                <Users className="w-3 h-3" /> {job.connectionsAtCompany} connection{job.connectionsAtCompany > 1 ? 's' : ''}
-              </span>
-            </>
-          )}
         </div>
       </div>
     </motion.div>
@@ -791,11 +783,6 @@ export default function Search() {
                     <span className="flex items-center gap-1.5">
                       <Users className="w-4 h-4" /> {selectedJob.applicants} applicants
                     </span>
-                    {selectedJob.connectionsAtCompany && selectedJob.connectionsAtCompany > 0 && (
-                      <span className="flex items-center gap-1.5 text-[#014BAA] font-medium">
-                        <Users className="w-4 h-4" /> {selectedJob.connectionsAtCompany} connection{selectedJob.connectionsAtCompany > 1 ? 's' : ''} work here
-                      </span>
-                    )}
                   </div>
                 </motion.div>
 
@@ -827,14 +814,6 @@ export default function Search() {
                       </div>
                     ))}
                   </div>
-                  {selectedJob.connectionsAtCompany && selectedJob.connectionsAtCompany > 0 && (
-                    <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#014BAA]" />
-                      <span className="text-sm text-blue-800 font-medium">
-                        {selectedJob.connectionsAtCompany} of your connections work here
-                      </span>
-                    </div>
-                  )}
                 </Section>
 
                 {/* Recruiter */}

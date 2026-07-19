@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, Briefcase, Mail, Link as LinkIcon, Edit2, Users, Eye, Star, CheckCircle, X, Save, Heart, MessageSquare, Share2, Bookmark, Trash2, MoreHorizontal, Edit3, Globe, Lock, Check, Clock, Camera, ChevronLeft, ChevronRight, Play, Volume2, VolumeX } from 'lucide-react';
+import { MapPin, Briefcase, Mail, Link as LinkIcon, Edit2, Eye, Star, CheckCircle, X, Save, Heart, MessageSquare, Share2, Bookmark, Trash2, MoreHorizontal, Edit3, Globe, Lock, Check, Clock, Camera, ChevronLeft, ChevronRight, Play, Volume2, VolumeX, Plus } from 'lucide-react';
 import { useStore } from '../store/StoreProvider';
 import { PostVisibility } from '../services/postService';
 import UserAvatar from '../components/UserAvatar';
 import VideoPlayer from '../components/VideoPlayer';
 import Lightbox from '../components/Lightbox';
 import CareerPassportCard from '../components/CareerPassportCard';
+import SkillProofPanel from '../components/SkillProofPanel';
 import { MOCK_JOBS } from '../data';
+import { projectService } from '../services/projectService';
 
 function timeAgo(dateStr: string): string {
   const now = new Date();
@@ -27,10 +29,13 @@ function timeAgo(dateStr: string): string {
 export default function Profile() {
   const store = useStore();
   const user = store.user;
+  const [searchParams, setSearchParams] = useSearchParams();
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', title: '', bio: '', location: '', website: '' });
   const [editAvatar, setEditAvatar] = useState('');
-  const [activeTab, setActiveTab] = useState<'posts' | 'saved' | 'friends' | 'likedVideos' | 'savedVideos'>('posts');
+  const [editSkills, setEditSkills] = useState<string[]>([]);
+  const [skillDraft, setSkillDraft] = useState('');
+  const [activeTab, setActiveTab] = useState<'posts' | 'saved'>('posts');
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [menuPostId, setMenuPostId] = useState<string | null>(null);
@@ -40,6 +45,7 @@ export default function Profile() {
   const [lightboxImages, setLightboxImages] = useState<string[] | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
+  const editFormRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -53,12 +59,9 @@ export default function Profile() {
 
   const myPosts = store.posts.filter(p => p.authorId === store.user.id);
   const savedPosts = store.posts.filter(p => p.saved);
-  const likedShorts = store.shorts.filter(s => s.liked);
-  const savedShorts = store.shorts.filter(s => s.saved);
-  const pendingRequests = store.friendRequests.filter(r => r.status === 'pending');
+  const proofProjects = projectService.getAllProjects(user);
 
   const statsData = [
-    { icon: Users, label: 'Connections', value: user.connections },
     { icon: Eye, label: 'Profile views', value: user.profileViews },
     { icon: Star, label: 'Endorsements', value: user.endorsements },
   ];
@@ -66,11 +69,28 @@ export default function Profile() {
   const startEdit = () => {
     setEditForm({ name: user.name, title: user.title, bio: user.bio, location: user.location, website: user.website });
     setEditAvatar('');
+    setEditSkills(user.skills.map(({ skill }) => skill));
+    setSkillDraft('');
     setEditing(true);
+    window.requestAnimationFrame(() => {
+      editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
+  useEffect(() => {
+    if (searchParams.get('edit') !== 'true') return;
+    startEdit();
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   const saveEdit = () => {
-    const updates: any = { ...editForm };
+    const updates: any = {
+      ...editForm,
+      skills: editSkills.map((skill) => ({
+        skill,
+        endorsements: user.skills.find((current) => current.skill.toLowerCase() === skill.toLowerCase())?.endorsements || 0,
+      })),
+    };
     if (editAvatar) updates.avatar = editAvatar;
     store.updateUser(updates);
     setEditing(false);
@@ -78,6 +98,17 @@ export default function Profile() {
 
   const cancelEdit = () => {
     setEditing(false);
+  };
+
+  const addEditSkill = () => {
+    const skill = skillDraft.trim();
+    if (!skill || editSkills.some((current) => current.toLowerCase() === skill.toLowerCase())) return;
+    setEditSkills((current) => [...current, skill]);
+    setSkillDraft('');
+  };
+
+  const removeEditSkill = (skill: string) => {
+    setEditSkills((current) => current.filter((item) => item !== skill));
   };
 
   const toggleComments = (postId: string) => {
@@ -136,6 +167,7 @@ export default function Profile() {
 
           {editing && (
             <motion.div
+              ref={editFormRef}
               className="bg-[#F8F3F0] rounded-xl p-6 mt-4 border border-gray-200 space-y-4"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
@@ -223,6 +255,39 @@ export default function Profile() {
                   onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                 />
               </div>
+              <div>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <label className="block text-xs font-medium text-gray-500">Skills</label>
+                  <span className="text-[0.7rem] font-medium text-gray-400">Add the skills you can support with real work</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    value={skillDraft}
+                    onChange={(event) => setSkillDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        addEditSkill();
+                      }
+                    }}
+                    placeholder="e.g. React, Figma, Project Management"
+                  />
+                  <button type="button" onClick={addEditSkill} className="product-focus inline-flex items-center gap-1.5 rounded-lg bg-[#014BAA] px-3 py-2 text-sm font-semibold text-white hover:bg-[#013b86]">
+                    <Plus className="h-4 w-4" />Add
+                  </button>
+                </div>
+                {editSkills.length ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {editSkills.map((skill) => (
+                      <span key={skill} className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-[#014BAA]">
+                        {skill}
+                        <button type="button" onClick={() => removeEditSkill(skill)} aria-label={`Remove ${skill}`} className="product-focus rounded-full p-0.5 hover:bg-blue-100"><X className="h-3 w-3" /></button>
+                      </span>
+                    ))}
+                  </div>
+                ) : <p className="mt-2 text-xs text-gray-400">No skills added yet. Three focused skills will make matching more useful.</p>}
+              </div>
             </motion.div>
           )}
 
@@ -274,7 +339,9 @@ export default function Profile() {
         <p className="text-gray-600 leading-relaxed text-sm sm:text-base">{user.bio}</p>
       </motion.div>
 
-      <CareerPassportCard user={user} jobs={MOCK_JOBS} />
+      <CareerPassportCard user={user} jobs={MOCK_JOBS} onUpdateProfile={startEdit} />
+
+      <SkillProofPanel user={user} projects={proofProjects} onAddSkills={startEdit} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <motion.div
@@ -342,7 +409,7 @@ export default function Profile() {
         </motion.div>
       </div>
 
-      {/* Posts & Friends Tabs */}
+      {/* Work activity tabs */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -370,36 +437,6 @@ export default function Profile() {
           >
             Saved ({savedPosts.length})
           </button>
-          <button
-            onClick={() => setActiveTab('likedVideos')}
-            className={`flex-1 py-4 px-3 text-sm font-semibold transition-colors border-b-2 ${
-              activeTab === 'likedVideos'
-                ? 'border-blue-500 text-[#014BAA]'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Heart className="w-3.5 h-3.5 inline mr-1" />{likedShorts.length}
-          </button>
-          <button
-            onClick={() => setActiveTab('savedVideos')}
-            className={`flex-1 py-4 px-3 text-sm font-semibold transition-colors border-b-2 ${
-              activeTab === 'savedVideos'
-                ? 'border-blue-500 text-[#014BAA]'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Bookmark className="w-3.5 h-3.5 inline mr-1" />{savedShorts.length}
-          </button>
-          <button
-            onClick={() => setActiveTab('friends')}
-            className={`flex-1 py-4 px-3 text-sm font-semibold transition-colors border-b-2 ${
-              activeTab === 'friends'
-                ? 'border-blue-500 text-[#014BAA]'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Friends ({store.connections.length + pendingRequests.length})
-          </button>
         </div>
 
         <AnimatePresence mode="wait">
@@ -414,8 +451,8 @@ export default function Profile() {
               {myPosts.length === 0 ? (
                 <div className="p-12 text-center">
                   <MessageSquare className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">You haven't posted anything yet.</p>
-                  <Link to="/" className="text-[#014BAA] hover:underline text-sm font-medium mt-2 inline-block">Create your first post</Link>
+                  <p className="text-gray-500 text-sm">You haven't shared any work yet.</p>
+                  <Link to="/projects" className="text-[#014BAA] hover:underline text-sm font-medium mt-2 inline-block">Showcase a project</Link>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
@@ -436,7 +473,7 @@ export default function Profile() {
                               <span className="text-xs text-gray-400">{timeAgo(post.createdAt)}</span>
                               <span className="px-1.5 py-0.5 bg-blue-50 text-[#014BAA] text-[10px] font-bold uppercase rounded">{post.category}</span>
                               {post.visibility === 'everyone' && <Globe className="w-3 h-3 text-gray-400" />}
-                              {post.visibility === 'friends' && <Users className="w-3 h-3 text-gray-400" />}
+                              {post.visibility === 'friends' && <Lock className="w-3 h-3 text-gray-400" />}
                               {post.visibility === 'only_me' && <Lock className="w-3 h-3 text-gray-400" />}
                             </div>
                             {editingPostId === post.id ? (
@@ -586,7 +623,7 @@ export default function Profile() {
                                   </button>
                                   <div className="border-t border-gray-100 px-4 py-2">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Visibility</p>
-                                    {(['everyone', 'friends', 'only_me'] as PostVisibility[]).map(v => (
+                                    {(['everyone', 'only_me'] as PostVisibility[]).map(v => (
                                       <button
                                         key={v}
                                         onClick={() => { store.updatePostVisibility(post.id, v); setMenuPostId(null); }}
@@ -594,7 +631,6 @@ export default function Profile() {
                                       >
                                         <div className="flex items-center gap-2">
                                           {v === 'everyone' && <Globe className="w-4 h-4 text-gray-500" />}
-                                          {v === 'friends' && <Users className="w-4 h-4 text-gray-500" />}
                                           {v === 'only_me' && <Lock className="w-4 h-4 text-gray-500" />}
                                           <span className="capitalize text-xs">{v.replace('_', ' ')}</span>
                                         </div>
@@ -762,195 +798,6 @@ export default function Profile() {
             </motion.div>
           )}
 
-          {activeTab === 'likedVideos' && (
-            <motion.div
-              key="likedVideos"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {likedShorts.length === 0 ? (
-                <div className="p-12 text-center">
-                  <Heart className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">No liked videos yet.</p>
-                  <p className="text-gray-400 text-xs mt-1">Like videos in Shorts to see them here.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-4">
-                  {likedShorts.map((short, index) => (
-                    <motion.div
-                      key={short.id}
-                      className="relative aspect-[9/16] bg-gray-900 rounded-xl overflow-hidden group cursor-pointer"
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.04 }}
-                    >
-                      <video
-                        src={short.videoUrl}
-                        className="w-full h-full object-cover"
-                        muted
-                        playsInline
-                        onMouseOver={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
-                        onMouseOut={(e) => { (e.target as HTMLVideoElement).pause(); (e.target as HTMLVideoElement).currentTime = 0; }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                        <p className="text-white text-[11px] font-semibold line-clamp-2 leading-tight">{short.description}</p>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <img src={short.authorAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(short.authorName)} alt="" className="w-4 h-4 rounded-full object-cover" />
-                          <span className="text-white/70 text-[10px] truncate">{short.authorName}</span>
-                        </div>
-                      </div>
-                      <div className="absolute top-2 right-2">
-                        <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {activeTab === 'savedVideos' && (
-            <motion.div
-              key="savedVideos"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {savedShorts.length === 0 ? (
-                <div className="p-12 text-center">
-                  <Bookmark className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">No saved videos yet.</p>
-                  <p className="text-gray-400 text-xs mt-1">Save videos in Shorts to see them here.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-4">
-                  {savedShorts.map((short, index) => (
-                    <motion.div
-                      key={short.id}
-                      className="relative aspect-[9/16] bg-gray-900 rounded-xl overflow-hidden group cursor-pointer"
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.04 }}
-                    >
-                      <video
-                        src={short.videoUrl}
-                        className="w-full h-full object-cover"
-                        muted
-                        playsInline
-                        onMouseOver={(e) => (e.target as HTMLVideoElement).play().catch(() => {})}
-                        onMouseOut={(e) => { (e.target as HTMLVideoElement).pause(); (e.target as HTMLVideoElement).currentTime = 0; }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-2.5">
-                        <p className="text-white text-[11px] font-semibold line-clamp-2 leading-tight">{short.description}</p>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <img src={short.authorAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(short.authorName)} alt="" className="w-4 h-4 rounded-full object-cover" />
-                          <span className="text-white/70 text-[10px] truncate">{short.authorName}</span>
-                        </div>
-                      </div>
-                      <div className="absolute top-2 right-2">
-                        <Bookmark className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {activeTab === 'friends' && (
-            <motion.div
-              key="friends"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {pendingRequests.length > 0 && (
-                <div className="border-b border-gray-100">
-                  <div className="px-5 py-3 bg-gradient-to-r from-blue-50/50 to-blue-50/30">
-                    <h3 className="text-sm font-semibold text-gray-700">Pending Requests ({pendingRequests.length})</h3>
-                  </div>
-                  {pendingRequests.map((req, index) => (
-                    <motion.div
-                      key={req.id}
-                      className="px-5 py-3 flex items-center justify-between gap-3 border-b border-gray-50 last:border-0"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                    >
-                      <Link to={`/friend/${req.fromId}`} className="flex items-center gap-3 hover:opacity-90 transition-opacity flex-1 min-w-0">
-                        <img src={req.fromAvatar} alt={req.fromName} className="w-10 h-10 rounded-full object-cover shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate hover:text-[#014BAA] transition-colors">{req.fromName}</p>
-                          <p className="text-xs text-gray-500 truncate">Wants to connect</p>
-                        </div>
-                      </Link>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => store.acceptFriendRequest(req.id)}
-                          className="p-1.5 gradient-primary text-white rounded-lg shadow-sm"
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => store.declineFriendRequest(req.id)}
-                          className="p-1.5 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-
-              <div>
-                <div className="px-5 py-3 bg-[#F8F3F0]/50">
-                  <h3 className="text-sm font-semibold text-gray-700">Connections ({store.connections.length})</h3>
-                </div>
-                {store.connections.length === 0 ? (
-                  <div className="p-8 text-center text-gray-500 text-sm">
-                    <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    No connections yet
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4">
-                    {store.connections.map((conn, index) => (
-                      <motion.div
-                        key={conn.id}
-                        className="flex flex-col items-center p-3 rounded-xl hover:bg-blue-50/50 transition-colors"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.03 }}
-                      >
-                        <Link to={`/friend/${conn.id}`} className="hover:opacity-90 transition-opacity">
-                          <div className="relative">
-                            <img src={conn.avatar} alt={conn.name} className="w-14 h-14 rounded-full object-cover border-2 border-gray-100" />
-                            {conn.online && (
-                              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-blue-500 border-2 border-white rounded-full" />
-                            )}
-                          </div>
-                        </Link>
-                        <Link to={`/friend/${conn.id}`} className="mt-2 text-center hover:text-[#014BAA] transition-colors">
-                          <p className="text-xs font-semibold text-gray-900 truncate w-full">{conn.name}</p>
-                          <p className="text-[10px] text-gray-500 truncate w-full">{conn.title}</p>
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
         </AnimatePresence>
       </motion.div>
 

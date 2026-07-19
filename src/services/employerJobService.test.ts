@@ -105,6 +105,21 @@ describe('employerJobService', () => {
     expect(missing).toMatchObject({ ok: false, error: 'Job post was not found.' });
   });
 
+  it('reconfirms active hiring without changing the job status', () => {
+    const result = employerJobService.reconfirm('e1');
+
+    expect(result.ok).toBe(true);
+    expect(result.jobs.find((job) => job.id === 'e1')).toMatchObject({
+      status: 'Active',
+      hiringConfirmedAt: 'Today',
+      responseCommitmentDays: 5,
+    });
+    expect(employerJobService.reconfirm('e4')).toMatchObject({
+      ok: false,
+      error: 'Only active job posts can be reconfirmed.',
+    });
+  });
+
   it('resets persisted job posts back to defaults', () => {
     employerJobService.remove('e1');
     employerJobService.reset();

@@ -11,7 +11,7 @@ export interface Application {
   candidateHeadline: string;
   candidateAvatar: string;
   appliedAt: string; // ISO timestamp
-  deadline: string; // appliedAt + 7 days
+  deadline: string; // appliedAt + the employer's JobX response commitment
   employerResponded: boolean;
   respondedAt?: string;
   expiredAt?: string; // Set when checking if expired

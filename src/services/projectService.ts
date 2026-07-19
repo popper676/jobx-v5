@@ -39,7 +39,7 @@ const DEFAULT_PROJECTS: CommunityProject[] = [
   {
     id: '1',
     title: 'Jobx Social Platform',
-    description: 'A professional social network platform built with React, Tailwind CSS, and Vite. Features include a real-time feed, connections management, and interactive project showcases.',
+    description: 'A career opportunity workspace built with React, Tailwind CSS, and Vite. Features include skills evidence, transparent jobs, accountable applications, and interactive project showcases.',
     image: DEFAULT_PROJECT_IMAGE,
     metrics: { likes: 142, comments: 24 },
     tags: ['React', 'TypeScript', 'Tailwind'],

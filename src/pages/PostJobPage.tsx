@@ -39,12 +39,14 @@ import {
   HelpCircle,
   Copy,
   RotateCcw,
+  ShieldCheck,
 } from 'lucide-react';
 import ScrollReveal from '../components/employer/ScrollReveal';
 import SpotlightCard from '../components/employer/SpotlightCard';
 import CustomTooltip from '../components/employer/CustomTooltip';
 import AnimatedModal from '../components/employer/AnimatedModal';
 import { employerJobService } from '../services/employerJobService';
+import type { ResponseCommitmentDays } from '../services/trustService';
 
 // ===== TYPES =====
 type JobType = 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
@@ -83,6 +85,7 @@ interface JobFormData {
   screeningQuestions: ScreeningQuestion[];
   isPromoted: boolean;
   targetAudience: string[];
+  responseCommitmentDays: ResponseCommitmentDays;
 }
 
 // ===== CONSTANTS =====
@@ -141,6 +144,12 @@ const PRESET_SCREENING_QUESTIONS: { question: string; type: ScreeningQuestion['t
   { question: 'What is your expected salary range?', type: 'text', required: false },
 ];
 
+const RESPONSE_COMMITMENTS: Array<{ days: ResponseCommitmentDays; label: string; description: string; recommended?: boolean }> = [
+  { days: 3, label: 'Fast response', description: 'Best for small, active hiring teams' },
+  { days: 5, label: 'Balanced', description: 'Clear and realistic for most teams', recommended: true },
+  { days: 7, label: 'Standard', description: 'More time for larger review panels' },
+];
+
 const AI_DESCRIPTION_TEMPLATES = [
   "We are looking for a [ROLE] to join our [DEPARTMENT] team. You will be responsible for [RESPONSIBILITY]. The ideal candidate has [YEARS] years of experience with [SKILL1], [SKILL2], and [SKILL3].",
   "Join our fast-growing [DEPARTMENT] team as a [ROLE]! You'll work on [PROJECT_TYPE] and collaborate with cross-functional teams. Requirements: proficiency in [SKILL1], strong problem-solving, and a passion for [INDUSTRY].",
@@ -185,6 +194,7 @@ export default function PostJobPage() {
     screeningQuestions: [],
     isPromoted: false,
     targetAudience: [],
+    responseCommitmentDays: 5,
   });
   const [skillInput, setSkillInput] = useState('');
   const [locationInput, setLocationInput] = useState('');
@@ -342,6 +352,7 @@ export default function PostJobPage() {
       salaryMax: form.salaryMax,
       payPeriod: form.payPeriod,
       status: 'Active',
+      responseCommitmentDays: form.responseCommitmentDays,
     });
     if (!result.ok) {
       setSaveError(result.error || 'Unable to publish this job post.');
@@ -364,6 +375,7 @@ export default function PostJobPage() {
       salaryMax: form.salaryMax,
       payPeriod: form.payPeriod,
       status: 'Draft',
+      responseCommitmentDays: form.responseCommitmentDays,
     });
     if (!result.ok) {
       setSaveError(result.error || 'Unable to save this draft.');
@@ -710,6 +722,40 @@ export default function PostJobPage() {
                           </div>
                         </div>
 
+                        <section className="overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-[#f6f9ff] to-emerald-50/40">
+                          <div className="flex items-start gap-3 border-b border-blue-100 px-4 py-4 sm:px-5">
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#014BAA] text-white shadow-md shadow-blue-500/15"><ShieldCheck className="h-5 w-5" /></span>
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2"><h3 className="text-sm font-bold text-gray-900">Choose your response contract</h3><span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[0.65rem] font-bold text-emerald-700">Required for JobX Trust</span></div>
+                              <p className="mt-1 text-xs leading-5 text-gray-500">Candidates will see this deadline before applying. Every on-time update strengthens your public response score.</p>
+                            </div>
+                          </div>
+                          <div className="grid gap-2 p-3 sm:grid-cols-3 sm:p-4">
+                            {RESPONSE_COMMITMENTS.map((commitment) => {
+                              const selected = form.responseCommitmentDays === commitment.days;
+                              return (
+                                <button
+                                  type="button"
+                                  key={commitment.days}
+                                  onClick={() => update('responseCommitmentDays', commitment.days)}
+                                  aria-pressed={selected}
+                                  className={`product-focus relative rounded-xl border p-4 text-left transition-all ${selected ? 'border-[#155eef] bg-white shadow-md shadow-blue-600/10 ring-2 ring-blue-100' : 'border-blue-100 bg-white/65 hover:border-blue-200 hover:bg-white'}`}
+                                >
+                                  {commitment.recommended && <span className="absolute right-2.5 top-2.5 rounded-full bg-[#eef4ff] px-2 py-0.5 text-[0.6rem] font-extrabold text-[#155eef]">Recommended</span>}
+                                  <p className="text-2xl font-extrabold tracking-[-0.04em] text-gray-900">{commitment.days}<span className="ml-1 text-xs font-bold tracking-normal text-gray-400">days</span></p>
+                                  <p className="mt-2 text-xs font-bold text-gray-800">{commitment.label}</p>
+                                  <p className="mt-1 text-[0.7rem] leading-4 text-gray-500">{commitment.description}</p>
+                                  <span className={`mt-3 flex h-4 w-4 items-center justify-center rounded-full border ${selected ? 'border-[#155eef] bg-[#155eef]' : 'border-gray-300'}`}>{selected && <Check className="h-3 w-3 text-white" />}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="flex items-start gap-2 border-t border-blue-100 bg-white/55 px-4 py-3 text-[0.7rem] leading-5 text-gray-600 sm:px-5">
+                            <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#155eef]" />
+                            Missing this window is recorded in your company response rate. Candidates always receive a visible outcome in their tracker.
+                          </div>
+                        </section>
+
                         {/* Application Method */}
                         <InputField label="How do candidates apply?" required>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -915,6 +961,16 @@ export default function PostJobPage() {
                           </div>
                         </div>
 
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+                          <div className="flex items-start gap-3">
+                            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                            <div className="flex-1">
+                              <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-semibold text-emerald-900">JobX response contract</p><span className="rounded-full bg-white px-2.5 py-1 text-xs font-extrabold text-emerald-700 shadow-sm">Answer in {form.responseCommitmentDays} days</span></div>
+                              <p className="mt-1 text-xs leading-5 text-emerald-700">Candidates see the deadline before applying, and every decision contributes to your public response score.</p>
+                            </div>
+                          </div>
+                        </div>
+
                         {/* Screening questions preview */}
                         {form.screeningQuestions.length > 0 && (
                           <div className="bg-white rounded-xl p-4 border border-gray-100">
@@ -950,7 +1006,7 @@ export default function PostJobPage() {
                             <div>
                               <p className="text-sm font-semibold text-blue-800">Ready to go live?</p>
                               <p className="text-xs text-blue-500 mt-1 leading-relaxed">
-                                Your job will be visible to all JobX candidates immediately after publishing. You can edit or close it anytime from My Posts.
+                                Your verified job will be visible immediately with a {form.responseCommitmentDays}-day response contract. You can reconfirm, edit or close it anytime from My Posts.
                               </p>
                             </div>
                           </div>

@@ -6,6 +6,8 @@ import { MapPin, Clock, DollarSign, Building, TrendingUp, AlertCircle, ChevronLe
 import JobCard from '../components/JobCard';
 import { useStore } from '../store/StoreProvider';
 import JobIntelligencePanel from '../components/JobIntelligencePanel';
+import JobTrustSignals from '../components/JobTrustSignals';
+import { getJobTrustProfile } from '../services/trustService';
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -31,6 +33,8 @@ export default function JobDetail() {
     );
   }
 
+  const trust = getJobTrustProfile(job);
+
   return (
     <div className="premium-page mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <Link to="/search" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#014BAA] mb-6 transition-colors group">
@@ -46,7 +50,7 @@ export default function JobDetail() {
             className="trust-surface mb-6 flex items-center gap-3 rounded-2xl border-blue-200 px-4 py-3 text-[#014BAA]"
           >
             <CheckCircle className="w-5 h-5 text-[#014BAA] shrink-0" />
-            <p className="font-medium">Application sent! This employer has up to 7 days to respond.</p>
+            <p className="font-medium">Application sent! This employer has up to {trust.responseCommitmentDays} days to respond.</p>
             <Link to="/applications" className="ml-auto whitespace-nowrap text-sm font-semibold underline underline-offset-2 hover:text-[#013b86]">
               Track it
             </Link>
@@ -153,13 +157,7 @@ export default function JobDetail() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="mb-8 flex flex-col gap-3 rounded-2xl border border-indigo-100 bg-gradient-to-r from-blue-50/90 to-indigo-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#014BAA] shadow-sm"><ShieldCheck className="h-5 w-5" /></div>
-                <div><p className="text-sm font-bold text-slate-900">A clear answer, not a black hole.</p><p className="mt-0.5 text-xs leading-5 text-slate-600">If you apply through JobX, this employer’s response deadline and decision will stay visible in your tracker.</p></div>
-              </div>
-              <span className="whitespace-nowrap text-xs font-bold text-[#014BAA]">7-day commitment</span>
-            </div>
+            <div className="mb-8"><JobTrustSignals job={job} variant="full" /></div>
             <div className="mb-8">
               <JobIntelligencePanel job={job} user={store.user} />
             </div>

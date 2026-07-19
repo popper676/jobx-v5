@@ -1,5 +1,23 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Clock, Filter, Search, ShieldCheck, Users, XCircle } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  AlertTriangle,
+  BadgeCheck,
+  BriefcaseBusiness,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  ExternalLink,
+  FileText,
+  Filter,
+  GraduationCap,
+  Mail,
+  MapPin,
+  Search,
+  ShieldCheck,
+  UserRound,
+  Users,
+  XCircle,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import UserAvatar from '../components/UserAvatar';
 import DeadlineCountdown from '../components/DeadlineCountdown';
@@ -9,6 +27,7 @@ import Breadcrumb from '../components/employer/Breadcrumb';
 import { useStore } from '../store/StoreProvider';
 import { antiGhostingService } from '../services/antiGhostingService';
 import { ApplicantStatus, Application } from '../types';
+import { getApplicantProfile } from '../data/applicantProfiles';
 
 type FilterStatus = 'All' | ApplicantStatus;
 
@@ -31,6 +50,7 @@ export default function ViewApplicantsPage() {
   const [filter, setFilter] = useState<FilterStatus>('All');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const detailsRef = useRef<HTMLDivElement>(null);
 
   const employerApplications = useMemo(
     () => applications
@@ -58,7 +78,19 @@ export default function ViewApplicantsPage() {
   }, [filteredApplications, selectedId]);
 
   const selected = employerApplications.find((application) => application.id === selectedId) || null;
+  const selectedProfile = selected ? getApplicantProfile(selected) : null;
   const awaitingResponse = employerApplications.filter((application) => !application.employerResponded && application.status !== 'Expired').length;
+
+  const selectApplicant = (applicationId: string) => {
+    setSelectedId(applicationId);
+    window.requestAnimationFrame(() => {
+      const details = detailsRef.current;
+      if (!details) return;
+      details.scrollTo({ top: 0, behavior: 'smooth' });
+      details.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      details.focus({ preventScroll: true });
+    });
+  };
 
   const respond = (application: Application, decision: 'accepted' | 'rejected') => {
     if (application.employerResponded || application.status === 'Expired') return;
@@ -132,8 +164,10 @@ export default function ViewApplicantsPage() {
                 {filteredApplications.map((application) => (
                   <button
                     key={application.id}
-                    onClick={() => setSelectedId(application.id)}
-                    className={`w-full px-5 py-4 text-left transition-colors ${selected?.id === application.id ? 'bg-blue-50/60' : 'hover:bg-[#F8F3F0]/70'}`}
+                    onClick={() => selectApplicant(application.id)}
+                    aria-controls="applicant-details"
+                    aria-pressed={selected?.id === application.id}
+                    className={`group w-full border-l-2 px-5 py-4 text-left transition-all ${selected?.id === application.id ? 'border-l-[#014BAA] bg-blue-50/70' : 'border-l-transparent hover:bg-[#F8F3F0]/70'}`}
                   >
                     <div className="flex items-start gap-3">
                       <UserAvatar src={application.candidateAvatar} name={application.candidateName} size="sm" className="h-10 w-10 shrink-0" />
@@ -145,7 +179,10 @@ export default function ViewApplicantsPage() {
                         <p className="mt-0.5 truncate text-xs text-gray-500">{application.candidateHeadline}</p>
                         <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
                           <span>{application.jobTitle}</span>
-                          <span>{application.matchScore}% match</span>
+                          <span className="inline-flex items-center gap-1 font-medium">
+                            {application.matchScore}% match
+                            <ChevronRight className={`h-3.5 w-3.5 transition-transform ${selected?.id === application.id ? 'translate-x-0.5 text-[#014BAA]' : 'group-hover:translate-x-0.5'}`} />
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -155,9 +192,23 @@ export default function ViewApplicantsPage() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-gray-200/80 bg-white shadow-sm">
-            {selected ? (
-              <div className="p-5 sm:p-6">
+          <div
+            ref={detailsRef}
+            id="applicant-details"
+            tabIndex={-1}
+            aria-label={selected ? `Applicant details for ${selected.candidateName}` : 'Applicant details'}
+            className="scroll-mt-40 self-start overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[#014BAA]/30 lg:sticky lg:top-40 lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto"
+          >
+            {selected && selectedProfile ? (
+              <div>
+                <div className="border-b border-gray-100 bg-gradient-to-br from-blue-50/70 via-white to-[#F8F3F0]/60 p-5 sm:p-6">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#014BAA]">Applicant details</p>
+                      <p className="mt-1 text-xs text-gray-500">Review the complete profile before responding.</p>
+                    </div>
+                    <span className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-bold ${statusClass(selected.status)}`}>{selected.status}</span>
+                  </div>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-center gap-3">
                     <UserAvatar src={selected.candidateAvatar} name={selected.candidateName} size="lg" className="h-14 w-14" />
@@ -166,14 +217,119 @@ export default function ViewApplicantsPage() {
                       <p className="text-sm text-gray-500">{selected.candidateHeadline}</p>
                     </div>
                   </div>
-                  <span className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-bold ${statusClass(selected.status)}`}>{selected.status}</span>
+                  <Link to="/messages" className="inline-flex w-fit items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs font-semibold text-[#014BAA] transition-colors hover:bg-blue-50">
+                    <Mail className="h-3.5 w-3.5" /> Message
+                  </Link>
                 </div>
 
-                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  <div className="mt-5 flex flex-wrap gap-2 text-xs text-gray-600">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5"><MapPin className="h-3.5 w-3.5 text-gray-400" /> {selectedProfile.location}</span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5"><Clock className="h-3.5 w-3.5 text-gray-400" /> {selectedProfile.availability}</span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5"><Mail className="h-3.5 w-3.5 text-gray-400" /> {selectedProfile.email}</span>
+                  </div>
+                </div>
+
+                <div className="p-5 sm:p-6">
+                  <section aria-labelledby="application-overview-heading">
+                    <div className="flex items-center gap-2">
+                      <BriefcaseBusiness className="h-4 w-4 text-[#014BAA]" />
+                      <h3 id="application-overview-heading" className="text-sm font-bold text-gray-900">Application overview</h3>
+                    </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <div className="rounded-xl bg-[#F8F3F0] p-3"><p className="text-xs text-gray-500">Applied for</p><p className="mt-1 text-sm font-semibold text-gray-900">{selected.jobTitle}</p></div>
                   <div className="rounded-xl bg-[#F8F3F0] p-3"><p className="text-xs text-gray-500">Applied</p><p className="mt-1 text-sm font-semibold text-gray-900">{formatDate(selected.appliedAt)}</p></div>
-                  <div className="rounded-xl bg-[#F8F3F0] p-3"><p className="text-xs text-gray-500">Skill match</p><p className="mt-1 text-sm font-semibold text-gray-900">{selected.matchScore}%</p></div>
+                  <div className="rounded-xl bg-[#F8F3F0] p-3">
+                    <p className="text-xs text-gray-500">Skill match</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <p className="text-sm font-semibold text-gray-900">{selected.matchScore}%</p>
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full bg-[#014BAA]" style={{ width: `${selected.matchScore}%` }} /></div>
+                    </div>
+                  </div>
                 </div>
+                  </section>
+
+                  <section className="mt-7 border-t border-gray-100 pt-6" aria-labelledby="candidate-summary-heading">
+                    <div className="flex items-center gap-2">
+                      <UserRound className="h-4 w-4 text-[#014BAA]" />
+                      <h3 id="candidate-summary-heading" className="text-sm font-bold text-gray-900">Candidate summary</h3>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-gray-600">{selectedProfile.about}</p>
+                  </section>
+
+                  <section className="mt-7 border-t border-gray-100 pt-6" aria-labelledby="skills-heading">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <BadgeCheck className="h-4 w-4 text-[#014BAA]" />
+                        <h3 id="skills-heading" className="text-sm font-bold text-gray-900">Skills & evidence</h3>
+                      </div>
+                      <span className="text-[11px] font-medium text-gray-400">Verified skills include proof</span>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {selectedProfile.skills.map((skill) => (
+                        <span key={skill.name} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold ${skill.verified ? 'border-blue-200 bg-blue-50 text-[#014BAA]' : 'border-gray-200 bg-white text-gray-600'}`}>
+                          {skill.verified && <BadgeCheck className="h-3.5 w-3.5" />}
+                          {skill.name}
+                        </span>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="mt-7 border-t border-gray-100 pt-6" aria-labelledby="proof-heading">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-[#014BAA]" />
+                      <h3 id="proof-heading" className="text-sm font-bold text-gray-900">Proof of work</h3>
+                    </div>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {selectedProfile.proofHighlights.map((proof) => (
+                        <article key={proof.title} className="rounded-xl border border-gray-200 p-4 transition-colors hover:border-blue-200 hover:bg-blue-50/30">
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="rounded-lg bg-blue-50 p-2 text-[#014BAA]"><ExternalLink className="h-4 w-4" /></span>
+                            <span className="rounded-full bg-[#F8F3F0] px-2 py-1 text-[10px] font-bold text-gray-600">{proof.signal}</span>
+                          </div>
+                          <h4 className="mt-3 text-sm font-semibold text-gray-900">{proof.title}</h4>
+                          <p className="mt-1.5 text-xs leading-5 text-gray-500">{proof.description}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="mt-7 border-t border-gray-100 pt-6" aria-labelledby="experience-heading">
+                    <div className="flex items-center gap-2">
+                      <BriefcaseBusiness className="h-4 w-4 text-[#014BAA]" />
+                      <h3 id="experience-heading" className="text-sm font-bold text-gray-900">Experience</h3>
+                    </div>
+                    <div className="mt-4 space-y-5 border-l border-blue-100 pl-5">
+                      {selectedProfile.experience.map((experience) => (
+                        <article key={`${experience.role}-${experience.company}`} className="relative">
+                          <span className="absolute -left-[25px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#014BAA] ring-2 ring-blue-100" />
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                            <div>
+                              <h4 className="text-sm font-semibold text-gray-900">{experience.role}</h4>
+                              <p className="text-xs font-medium text-[#014BAA]">{experience.company}</p>
+                            </div>
+                            <span className="shrink-0 text-[11px] font-medium text-gray-400">{experience.period}</span>
+                          </div>
+                          <p className="mt-2 text-xs leading-5 text-gray-500">{experience.achievement}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="mt-7 border-t border-gray-100 pt-6" aria-labelledby="education-heading">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4 text-[#014BAA]" />
+                      <h3 id="education-heading" className="text-sm font-bold text-gray-900">Education</h3>
+                    </div>
+                    <div className="mt-4 rounded-xl border border-gray-200 p-4">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{selectedProfile.education.qualification}</p>
+                          <p className="mt-0.5 text-xs text-gray-500">{selectedProfile.education.school}</p>
+                        </div>
+                        <span className="shrink-0 text-[11px] font-medium text-gray-400">{selectedProfile.education.period}</span>
+                      </div>
+                    </div>
+                  </section>
 
                 <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -203,6 +359,7 @@ export default function ViewApplicantsPage() {
                     </button>
                   </div>
                 )}
+                </div>
               </div>
             ) : (
               <div className="p-8"><EmptyState icon={Users} title="Select an applicant" description="Choose an applicant to review their response deadline and send an update." /></div>

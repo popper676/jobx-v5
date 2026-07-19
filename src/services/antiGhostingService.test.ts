@@ -160,6 +160,20 @@ describe('antiGhostingService', () => {
     expect(mockDbSet).toHaveBeenCalled();
   });
 
+  it('honors the employer response commitment selected for the job', () => {
+    mockDbGet.mockReturnValue([]);
+
+    const result = antiGhostingService.createApplication({
+      jobId: '2', jobTitle: 'Product Designer', companyName: 'StudioX', candidateId: 'candidate_1',
+      candidateName: 'Jordan Lee', candidateHeadline: 'Product Designer', candidateAvatar: '', matchScore: 88,
+      responseCommitmentDays: 3,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(new Date(result.application!.deadline).getTime() - new Date(result.application!.appliedAt).getTime())
+      .toBe(3 * 24 * 60 * 60 * 1000);
+  });
+
   it('prevents duplicate applications for the same candidate and job', () => {
     const existing: Application = {
       id: 'existing', jobId: '1', jobTitle: 'Senior React Engineer', companyId: 'company_1', candidateId: 'candidate_1', candidateName: 'Jordan Lee', candidateHeadline: 'Frontend Engineer', candidateAvatar: '',

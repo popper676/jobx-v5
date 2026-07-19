@@ -8,9 +8,10 @@ interface CareerPassportCardProps {
   user: User;
   jobs?: Job[];
   compact?: boolean;
+  onUpdateProfile?: () => void;
 }
 
-export default function CareerPassportCard({ user, jobs, compact = false }: CareerPassportCardProps) {
+export default function CareerPassportCard({ user, jobs, compact = false, onUpdateProfile }: CareerPassportCardProps) {
   const passport = getCareerPassport(user, jobs);
   const incompleteSections = passport.sections.filter((section) => !section.complete);
 
@@ -27,7 +28,7 @@ export default function CareerPassportCard({ user, jobs, compact = false }: Care
         </div>
         <div className="shrink-0 text-right">
           <p className="flex items-center justify-end gap-1 text-xl font-bold tracking-[-0.04em] text-slate-900 dark:text-white"><TrendingUp aria-hidden="true" className="h-4 w-4 text-[#155eef]" />{passport.score}%</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Profile strength</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Profile completion</p>
         </div>
       </div>
 
@@ -68,9 +69,19 @@ export default function CareerPassportCard({ user, jobs, compact = false }: Care
             Your career foundation is ready to support more precise job matches.
           </p>
         )}
-        <Link to="/profile" className="product-focus mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#155eef] hover:text-[#0c3e9e]">
-          Update profile <ArrowRight className="h-4 w-4" />
-        </Link>
+        {onUpdateProfile ? (
+          <button
+            type="button"
+            onClick={onUpdateProfile}
+            className="product-focus mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#155eef] hover:text-[#0c3e9e]"
+          >
+            Update profile <ArrowRight className="h-4 w-4" />
+          </button>
+        ) : (
+          <Link to="/profile?edit=true" className="product-focus mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#155eef] hover:text-[#0c3e9e]">
+            Update profile <ArrowRight className="h-4 w-4" />
+          </Link>
+        )}
       </div>
     </section>
   );

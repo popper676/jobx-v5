@@ -4,15 +4,14 @@ import { authService, AuthState } from '../services/authService';
 import { userService, User } from '../services/userService';
 import { jobService, SavedJob, AppliedJob } from '../services/jobService';
 import { postService, Post, PostVisibility } from '../services/postService';
-import { friendService, FriendRequest, Connection, Recommendation } from '../services/friendService';
 import { messageService, Conversation, Message } from '../services/messageService';
 import { notificationService, Notification } from '../services/notificationService';
-import { shortsService, ShortVideo } from '../services/shortsService';
 import { myDayService, MyDay, MyDayItem } from '../services/myDayService';
 import { antiGhostingService } from '../services/antiGhostingService';
 import { employerJobService } from '../services/employerJobService';
 import { getJobIntelligence } from '../services/careerIntelligenceService';
 import { Application } from '../types';
+import { getJobTrustProfile } from '../services/trustService';
 
 interface StoreState {
   auth: AuthState;
@@ -20,15 +19,10 @@ interface StoreState {
   posts: Post[];
   savedJobs: SavedJob[];
   appliedJobs: AppliedJob[];
-  friendRequests: FriendRequest[];
-  sentRequests: FriendRequest[];
-  connections: Connection[];
-  recommendations: Recommendation[];
   conversations: Conversation[];
   currentMessages: Message[];
   activeChat: Conversation | null;
   notifications: Notification[];
-  shorts: ShortVideo[];
   myDays: MyDay[];
   applications: Application[];
 }
@@ -51,10 +45,6 @@ interface StoreActions {
   saveJob: (jobId: string) => void;
   unsaveJob: (jobId: string) => void;
   applyToJob: (jobId: string) => { success: boolean; error?: string };
-  acceptFriendRequest: (id: string) => void;
-  declineFriendRequest: (id: string) => void;
-  sendConnectionRequest: (id: string) => void;
-  searchPeople: (query: string) => void;
   setActiveChat: (conversation: Conversation) => void;
   sendMessage: (conversationId: string, text: string) => void;
   searchConversations: (query: string) => void;
@@ -62,12 +52,6 @@ interface StoreActions {
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   addNotification: (notification: Omit<Notification, 'id'>) => void;
-  toggleLikeShort: (shortId: string) => void;
-  toggleSaveShort: (shortId: string) => void;
-  shareShort: (shortId: string) => void;
-  addShortComment: (shortId: string, text: string) => void;
-  createShort: (videoUrl: string, description: string, music?: string) => boolean;
-  deleteShort: (shortId: string) => void;
   createMyDay: (items: MyDayItem[]) => boolean;
   markMyDayViewed: (dayId: string) => void;
   deleteMyDay: (dayId: string) => void;
@@ -85,15 +69,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [posts, setPosts] = useState<Post[]>(postService.getAll());
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>(jobService.getSaved());
   const [appliedJobs, setAppliedJobs] = useState<AppliedJob[]>(jobService.getApplied());
-  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>(friendService.getIncomingRequests());
-  const [sentRequests, setSentRequests] = useState<FriendRequest[]>(friendService.getSentRequests());
-  const [connections, setConnections] = useState<Connection[]>(friendService.getConnections());
-  const [recommendations, setRecommendations] = useState<Recommendation[]>(friendService.getRecommendations());
   const [conversations, setConversations] = useState<Conversation[]>(messageService.getConversations());
   const [currentMessages, setCurrentMessages] = useState<Message[]>([]);
   const [activeChat, setActiveChatState] = useState<Conversation | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>(notificationService.getAll());
-  const [shorts, setShorts] = useState<ShortVideo[]>(shortsService.getAll());
   const [myDays, setMyDays] = useState<MyDay[]>(myDayService.getAll());
   const [applications, setApplications] = useState<Application[]>(antiGhostingService.getApplications());
 
@@ -202,6 +181,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     const user = userService.get();
     const matchScore = getJobIntelligence(job, user).score;
+    const trustProfile = getJobTrustProfile(job);
     const applicationResult = antiGhostingService.createApplication({
       jobId: job.id,
       jobTitle: job.title,
@@ -211,6 +191,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       candidateHeadline: user.title,
       candidateAvatar: user.avatar,
       matchScore,
+      responseCommitmentDays: trustProfile.responseCommitmentDays,
     });
     if (!applicationResult.ok) return { success: false, error: applicationResult.error };
 
@@ -218,35 +199,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setAppliedJobs([...updated]);
     setApplications(antiGhostingService.getApplications());
     return { success: true };
-  }, []);
-
-  const acceptFriendRequest = useCallback((id: string) => {
-    const result = friendService.acceptRequest(id);
-    setFriendRequests(friendService.getIncomingRequests());
-    setConnections(friendService.getConnections());
-    setRecommendations(friendService.getRecommendations());
-    setNotifications(notificationService.getAll());
-  }, []);
-
-  const declineFriendRequest = useCallback((id: string) => {
-    friendService.declineRequest(id);
-    setFriendRequests(friendService.getIncomingRequests());
-    setNotifications(notificationService.getAll());
-  }, []);
-
-  const sendConnectionRequest = useCallback((id: string) => {
-    const u = userService.get();
-    const result = friendService.sendConnectionRequest(id, u.name, u.avatar);
-    setSentRequests(friendService.getSentRequests());
-    setRecommendations(result.recommendations);
-  }, []);
-
-  const searchPeople = useCallback((query: string) => {
-    const result = friendService.searchPeople(query);
-    setFriendRequests(friendService.getIncomingRequests());
-    setSentRequests(friendService.getSentRequests());
-    setConnections(result.connections);
-    setRecommendations(result.recommendations);
   }, []);
 
   const handleSetActiveChat = useCallback((conversation: Conversation) => {
@@ -292,40 +244,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addNotification = useCallback((notification: Omit<Notification, 'id'>) => {
     notificationService.add(notification);
     setNotifications(notificationService.getAll());
-  }, []);
-
-  const toggleLikeShort = useCallback((shortId: string) => {
-    shortsService.toggleLike(shortId);
-    setShorts(shortsService.getAll());
-  }, []);
-
-  const toggleSaveShort = useCallback((shortId: string) => {
-    shortsService.toggleSave(shortId);
-    setShorts(shortsService.getAll());
-  }, []);
-
-  const shareShort = useCallback((shortId: string) => {
-    shortsService.shareShort(shortId);
-    setShorts(shortsService.getAll());
-  }, []);
-
-  const addShortComment = useCallback((shortId: string, text: string) => {
-    const u = userService.get();
-    shortsService.addComment(shortId, text, u.id, u.name, u.avatar);
-    setShorts(shortsService.getAll());
-  }, []);
-
-  const createShort = useCallback((videoUrl: string, description: string, music?: string): boolean => {
-    const u = userService.get();
-    const result = shortsService.createShort(videoUrl, description, music || '', u.id, u.name, u.title, u.avatar);
-    if (!result) return false;
-    setShorts(shortsService.getAll());
-    return true;
-  }, []);
-
-  const deleteShort = useCallback((shortId: string) => {
-    shortsService.deleteShort(shortId);
-    setShorts(shortsService.getAll());
   }, []);
 
   const createMyDay = useCallback((items: MyDayItem[]): boolean => {
@@ -409,38 +327,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     employerJobService.reset();
     antiGhostingService.reset();
     postService.reset();
-    friendService.reset();
     messageService.reset();
     notificationService.reset();
-    shortsService.reset();
     myDayService.reset();
     setAuth(authService.getState());
     setUser(userService.get());
     setPosts(postService.getAll());
     setSavedJobs(jobService.getSaved());
     setAppliedJobs(jobService.getApplied());
-    setFriendRequests(friendService.getIncomingRequests());
-    setSentRequests(friendService.getSentRequests());
-    setConnections(friendService.getConnections());
-    setRecommendations(friendService.getRecommendations());
     setConversations(messageService.getConversations());
     setCurrentMessages([]);
     setActiveChatState(null);
     setNotifications(notificationService.getAll());
-    setShorts(shortsService.getAll());
     setMyDays(myDayService.getAll());
     setApplications(antiGhostingService.getApplications());
   }, []);
 
   const store: Store = {
-    auth, user, posts, savedJobs, appliedJobs,     friendRequests, sentRequests, connections, recommendations,
-    conversations, currentMessages, activeChat, notifications, shorts, myDays, applications,
+    auth, user, posts, savedJobs, appliedJobs,
+    conversations, currentMessages, activeChat, notifications, myDays, applications,
     login, signup, logout, updateUser, completeProfile, endorseSkill, createPost, toggleLikePost, toggleSavePost,
     addComment, sharePost, deletePost, updatePost, updatePostVisibility, saveJob, unsaveJob, applyToJob,
-    acceptFriendRequest, declineFriendRequest, sendConnectionRequest, searchPeople,
     setActiveChat: handleSetActiveChat, sendMessage, searchConversations, searchJobs,
     markNotificationRead, markAllNotificationsRead, addNotification,
-    toggleLikeShort, toggleSaveShort, shareShort, addShortComment, createShort, deleteShort,
     createMyDay, markMyDayViewed, deleteMyDay, respondToApplication, resetAll,
   };
 

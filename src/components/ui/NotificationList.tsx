@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, UserPlus, Eye, FileText, Check, X, Briefcase } from 'lucide-react';
+import { Heart, MessageCircle, Eye, FileText, Briefcase } from 'lucide-react';
 import { useStore } from '../../store/StoreProvider';
 import { Notification } from '../../services/notificationService';
 
@@ -11,13 +11,13 @@ interface NotificationListProps {
 
 export function NotificationList({ onClose }: NotificationListProps) {
   const store = useStore();
-  const unreadCount = store.notifications.filter(n => !n.read).length;
+  const visibleNotifications = store.notifications.filter((notification) => notification.type !== 'connection');
+  const unreadCount = visibleNotifications.filter((notification) => !notification.read).length;
 
   const renderIcon = (type: Notification['type']) => {
     switch (type) {
       case 'like': return <div className="bg-red-500 w-full h-full rounded-full flex justify-center items-center"><Heart className="w-2.5 h-2.5 text-white fill-current" /></div>;
       case 'comment': return <div className="bg-blue-500 w-full h-full rounded-full flex justify-center items-center"><MessageCircle className="w-2.5 h-2.5 text-white fill-current" /></div>;
-      case 'connection': return <div className="bg-gradient-to-r from-blue-500 to-indigo-600 w-full h-full rounded-full flex justify-center items-center"><UserPlus className="w-2.5 h-2.5 text-white" /></div>;
       case 'view': return <div className="bg-violet-500 w-full h-full rounded-full flex justify-center items-center"><Eye className="w-2.5 h-2.5 text-white" /></div>;
       case 'post': return <div className="bg-blue-500 w-full h-full rounded-full flex justify-center items-center"><FileText className="w-2.5 h-2.5 text-white" /></div>;
       case 'job_alert': return <div className="bg-amber-500 w-full h-full rounded-full flex justify-center items-center"><Briefcase className="w-2.5 h-2.5 text-white" /></div>;
@@ -43,7 +43,7 @@ export function NotificationList({ onClose }: NotificationListProps) {
       </div>
       <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
         <AnimatePresence initial={false}>
-          {store.notifications.length === 0 ? (
+          {visibleNotifications.length === 0 ? (
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
               className="px-4 py-8 text-center text-gray-500 text-sm"
@@ -51,7 +51,7 @@ export function NotificationList({ onClose }: NotificationListProps) {
               No notifications
             </motion.div>
           ) : (
-            store.notifications.map((notification) => (
+            visibleNotifications.map((notification) => (
               <motion.div 
                 key={notification.id}
                 layout
@@ -69,10 +69,10 @@ export function NotificationList({ onClose }: NotificationListProps) {
                 
                 <div className="flex gap-3 relative z-10">
                   <Link
-                    to={notification.link || (notification.type === 'connection' ? `/friend/${notification.userId}` : '#')}
+                    to={notification.link || '/dashboard'}
                     onClick={() => {
                       if (!notification.read) store.markNotificationRead(notification.id);
-                      if (notification.type === 'connection' && onClose) onClose();
+                      onClose?.();
                     }}
                     className="relative shrink-0 mt-1"
                   >
@@ -97,30 +97,6 @@ export function NotificationList({ onClose }: NotificationListProps) {
                     )}
                     <p className="text-[11px] font-medium text-gray-400 mt-1.5">{notification.time}</p>
                     
-                    {notification.type === 'connection' && (
-                      <div className="flex gap-2 mt-2.5">
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            store.acceptFriendRequest(notification.friendRequestId || notification.userId || '');
-                          }}
-                          className="flex items-center justify-center flex-1 gap-1 py-1.5 bg-[#014BAA] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors hover:bg-[#013b86]"
-                        >
-                          <Check className="w-3.5 h-3.5" /> Accept
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            store.declineFriendRequest(notification.friendRequestId || notification.userId || '');
-                          }}
-                          className="flex items-center justify-center flex-1 gap-1 py-1.5 bg-gray-100 text-gray-600 hover:bg-gray-200 text-xs font-semibold rounded-lg transition-colors"
-                        >
-                          <X className="w-3.5 h-3.5" /> Decline
-                        </motion.button>
-                      </div>
-                    )}
                   </div>
                   
                   {!notification.read && (

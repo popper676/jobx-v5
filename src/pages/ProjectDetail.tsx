@@ -23,7 +23,7 @@ type ProjectDetailRecord = {
 const PROJECT_DETAILS = {
   '1': {
     title: 'Jobx Social Platform',
-    description: 'A professional social network built with React, Tailwind CSS, and Vite. It brings together an interactive feed, connections management, and project showcases for modern job seekers.',
+    description: 'A career opportunity workspace built with React, Tailwind CSS, and Vite. It brings together skills evidence, transparent jobs, accountable applications, and project showcases for modern job seekers.',
     image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&h=400&q=80',
     tags: ['React', 'TypeScript', 'Tailwind CSS'],
     openToCollab: true,

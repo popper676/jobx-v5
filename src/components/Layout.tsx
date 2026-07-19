@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Briefcase, Home, Users, FolderGit2, Settings, Bell, MessageSquare, Heart, MessageCircle, UserPlus, Eye, LogOut, User, Check, X, FileText, Play, RefreshCw, BarChart3, Compass } from 'lucide-react';
+import { Search, Briefcase, LayoutDashboard, FolderGit2, Settings, Bell, MessageSquare, LogOut, User, X, FileText, RefreshCw, Compass } from 'lucide-react';
 import { useStore } from '../store/StoreProvider';
 import { useRole } from '../context/RoleContext';
 import { MOCK_JOBS } from '../data';
@@ -13,11 +13,9 @@ import { SpotlightNavbar } from './ui/SpotlightNavbar';
 import { NotificationList } from './ui/NotificationList';
 
 export default function Layout() {
-  const location = useLocation();
   const navigate = useNavigate();
   const store = useStore();
   const { role, toggleRole, isTransitioning } = useRole();
-  const isShorts = location.pathname === '/shorts';
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,7 +43,7 @@ export default function Layout() {
   }, []);
 
   const firstName = store.user.name.split(' ')[0];
-  const unreadCount = store.notifications.filter(n => !n.read).length;
+  const unreadCount = store.notifications.filter((notification) => !notification.read && notification.type !== 'connection').length;
 
   const handleSignOut = () => {
     setShowUserMenu(false);
@@ -57,42 +55,35 @@ export default function Layout() {
     setShowUserMenu(false);
     toggleRole();
     setTimeout(() => {
-      navigate(isEmployer ? '/' : '/employer');
+      navigate(isEmployer ? '/dashboard' : '/employer');
     }, 600);
   };
 
   const searchResults = (() => {
-    if (!searchQuery.trim()) return { posts: [], friends: [], jobs: [] };
+    if (!searchQuery.trim()) return { jobs: [] };
     const q = searchQuery.toLowerCase();
     return {
-      posts: store.posts.filter(p => p.content.toLowerCase().includes(q) || p.authorName.toLowerCase().includes(q)).slice(0, 4),
-      friends: [...store.connections, ...store.recommendations].filter(f => f.name.toLowerCase().includes(q) || f.title?.toLowerCase().includes(q)).slice(0, 4),
       jobs: MOCK_JOBS.filter(j => j.title.toLowerCase().includes(q) || j.company.toLowerCase().includes(q) || j.tags.some(t => t.toLowerCase().includes(q))).slice(0, 4),
     };
   })();
 
-  const hasResults = searchResults.posts.length > 0 || searchResults.friends.length > 0 || searchResults.jobs.length > 0;
+  const hasResults = searchResults.jobs.length > 0;
 
   const seekerNavLinks = [
-    { name: 'Home', path: '/', icon: <Home className="w-5 h-5" /> },
-    { name: 'Shorts', path: '/shorts', icon: <Play className="w-5 h-5" /> },
-    { name: 'Friends', path: '/friends', icon: <Users className="w-5 h-5" /> },
+    { name: 'Workspace', path: '/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: 'Jobs', path: '/jobs', icon: <Briefcase className="w-5 h-5" /> },
     { name: 'Tracker', path: '/applications', icon: <FileText className="w-5 h-5" /> },
     { name: 'Projects', path: '/projects', icon: <FolderGit2 className="w-5 h-5" /> },
     { name: 'Settings', path: '/settings', icon: <Settings className="w-5 h-5" /> },
   ];
 
-  const navLinks = seekerNavLinks;
-
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#F8F3F0]">
-      {!isShorts && (
-        <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90">
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-8">
-              <Link to="/" className="flex items-center gap-2 group">
+              <Link to={isEmployer ? '/employer' : '/dashboard'} className="flex items-center gap-2 group">
                 <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center shadow-sm shadow-blue-500/20 group-hover:shadow-md group-hover:shadow-blue-500/30 transition-all">
                   <Briefcase className="w-5 h-5 text-white" />
                 </div>
@@ -104,7 +95,7 @@ export default function Layout() {
                   <Search className="w-4 h-4 text-gray-400" />
                   <input 
                     type="text" 
-                    placeholder={isEmployer ? "Search jobs, applicants..." : "Search posts, people, jobs..."} 
+                    placeholder={isEmployer ? "Search jobs, applicants..." : "Search jobs..."}
                     className="bg-transparent border-none focus:ring-0 text-sm ml-2 w-56 outline-none"
                     value={searchQuery}
                     onChange={(e) => {
@@ -130,51 +121,6 @@ export default function Layout() {
                     >
                       {hasResults ? (
                         <div className="max-h-96 overflow-y-auto">
-                          {searchResults.friends.length > 0 && (
-                            <div>
-                              <div className="px-4 py-2 bg-gradient-to-r from-blue-50/50 to-blue-50/30 border-b border-gray-100">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">People</span>
-                              </div>
-                              {searchResults.friends.map((friend: any) => (
-                                <Link
-                                  key={friend.id}
-                                  to={`/friend/${friend.id}`}
-                                  onClick={() => { setShowSearch(false); setSearchQuery(''); }}
-                                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50/50 transition-colors"
-                                >
-                                  <img src={friend.avatar} alt={friend.name} className="w-8 h-8 rounded-full object-cover" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">{friend.name}</p>
-                                    <p className="text-xs text-gray-500 truncate">{friend.title}</p>
-                                  </div>
-                                  <UserPlus className="w-3.5 h-3.5 text-[#014BAA]" />
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                          {searchResults.posts.length > 0 && (
-                            <div>
-                              <div className="px-4 py-2 bg-gradient-to-r from-blue-50/50 to-blue-50/30 border-b border-gray-100">
-                                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Posts</span>
-                              </div>
-                              {searchResults.posts.map((post: any) => (
-                                <Link
-                                  key={post.id}
-                                  to="/"
-                                  onClick={() => { setShowSearch(false); setSearchQuery(''); }}
-                                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50/50 transition-colors"
-                                >
-                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shrink-0">
-                                    <FileText className="w-4 h-4 text-white" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-gray-800 truncate">{post.content.slice(0, 60)}...</p>
-                                    <p className="text-xs text-gray-500">by {post.authorName}</p>
-                                  </div>
-                                </Link>
-                              ))}
-                            </div>
-                          )}
                           {searchResults.jobs.length > 0 && (
                             <div>
                               <div className="px-4 py-2 bg-gradient-to-r from-blue-50/50 to-blue-50/30 border-b border-gray-100">
@@ -319,15 +265,10 @@ export default function Layout() {
           </div>
         </div>
       </header>
-      )}
 
-      {isShorts ? (
+      <main className="flex-grow flex flex-col pt-6 pb-12 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Outlet />
-      ) : (
-        <main className="flex-grow flex flex-col pt-6 pb-12 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Outlet />
-        </main>
-      )}
+      </main>
 
       <RoleTransitionScreen />
 

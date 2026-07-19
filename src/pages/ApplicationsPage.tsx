@@ -28,6 +28,11 @@ function responseCopy(application: Application): string {
   return `The employer’s next update is expected within ${days} ${days === 1 ? 'day' : 'days'}.`;
 }
 
+function responseCommitmentDays(application: Application): number {
+  const duration = new Date(application.deadline).getTime() - new Date(application.appliedAt).getTime();
+  return Math.max(1, Math.round(duration / 86_400_000));
+}
+
 export default function ApplicationsPage() {
   const { applications, user } = useStore();
   const candidateApplications = useMemo(() => applications.filter((application) => application.candidateId === user.id).sort((a, b) => new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime()), [applications, user.id]);
@@ -54,12 +59,13 @@ const ApplicationCard: React.FC<{ application: Application }> = ({ application }
   const responseRate = antiGhostingService.getCompanyResponseRate(application.companyId);
   const responded = application.employerResponded;
   const progressed = application.status === 'Shortlisted';
+  const commitmentDays = responseCommitmentDays(application);
 
   return (
     <article className="product-surface product-card-interactive p-5 sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">{application.companyName || 'Employer'}</p><h2 className="mt-1 text-lg font-extrabold tracking-[-0.025em] text-slate-900 dark:text-white">{application.jobTitle}</h2><p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">Applied {formatDate(application.appliedAt)}</p></div><span className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold ${status.className}`}>{status.icon}{status.label}</span></div>
       <div className="mt-6 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-4 dark:border-slate-700 dark:bg-slate-900/60"><ProgressStep label="Applied" completed /><span className={`h-px ${responded ? 'bg-[#155eef]' : 'border-t border-dashed border-slate-300 dark:border-slate-600'}`} /><ProgressStep label="Employer update" completed={responded} active={!responded} /><span className={`h-px ${progressed ? 'bg-[#155eef]' : 'border-t border-dashed border-slate-300 dark:border-slate-600'}`} /><ProgressStep label={progressed ? 'Shortlisted' : 'Next step'} completed={progressed} /></div>
-      <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-3 dark:border-slate-800"><Metric label="Response deadline" value={formatDate(application.deadline)} /><Metric label="Employer response rate" value={`${responseRate}% within 7 days`} /><Metric label="Your profile match" value={`${application.matchScore}%`} /></div>
+      <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-3 dark:border-slate-800"><Metric label={`${commitmentDays}-day response deadline`} value={formatDate(application.deadline)} /><Metric label="Employer response rate" value={`${responseRate}% on time`} /><Metric label="Your profile match" value={`${application.matchScore}%`} /></div>
       <p className="mt-5 flex items-start gap-2 text-sm leading-5 text-slate-600 dark:text-slate-300"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#155eef]" />{responseCopy(application)}</p>
     </article>
   );

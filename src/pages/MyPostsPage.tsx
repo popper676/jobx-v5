@@ -15,6 +15,9 @@ import {
   Plus,
   LayoutGrid,
   LayoutList,
+  BadgeCheck,
+  ShieldCheck,
+  RefreshCcw,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import FilterTabs from '../components/employer/FilterTabs';
@@ -124,6 +127,16 @@ export default function MyPostsPage() {
     setJobs(result.jobs);
   };
 
+  const reconfirmHiring = (job: EmployerJob) => {
+    const result = employerJobService.reconfirm(job.id);
+    if (!result.ok) {
+      setActionError(result.error || 'Unable to reconfirm this job post.');
+      return;
+    }
+    setActionError('');
+    setJobs(result.jobs);
+  };
+
   const tabList = [
     { label: 'All', key: 'All', count: counts.All },
     { label: 'Active', key: 'Active', count: counts.Active },
@@ -153,6 +166,17 @@ export default function MyPostsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <Breadcrumb items={[{ label: 'Dashboard', path: '/employer' }, { label: 'My Posts' }]} />
+
+        <section className="mb-6 overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-r from-[#f6f9ff] via-white to-emerald-50/55 shadow-sm">
+          <div className="grid gap-px bg-blue-100/70 sm:grid-cols-[1.4fr_0.8fr_0.8fr]">
+            <div className="flex items-start gap-3 bg-white/90 p-5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#014BAA] text-white"><ShieldCheck className="h-5 w-5" /></span>
+              <div><p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[#155eef]">Your hiring trust</p><h2 className="mt-1 text-lg font-extrabold text-gray-900">Keep every role active and accountable.</h2><p className="mt-1 text-xs leading-5 text-gray-500">Reconfirm live roles and answer before each public deadline.</p></div>
+            </div>
+            <div className="bg-white/90 p-5"><p className="text-xs font-bold text-gray-500">Company response score</p><p className="mt-2 text-3xl font-extrabold tracking-tight text-emerald-600">96%</p><p className="mt-1 text-[0.7rem] text-gray-500">On-time candidate updates</p></div>
+            <div className="bg-white/90 p-5"><p className="text-xs font-bold text-gray-500">Active commitments</p><p className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900">{counts.Active}</p><p className="mt-1 text-[0.7rem] text-gray-500">Verified roles currently hiring</p></div>
+          </div>
+        </section>
 
         {actionError && (
           <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -237,8 +261,10 @@ export default function MyPostsPage() {
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         <h3 className="text-base font-bold text-gray-900">{job.title}</h3>
                         <StatusBadge status={job.status} size="sm" />
+                        {job.verifiedEmployer && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[0.65rem] font-bold text-emerald-700"><BadgeCheck className="h-3.5 w-3.5" />Verified</span>}
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-[0.65rem] font-bold text-[#155eef]"><ShieldCheck className="h-3.5 w-3.5" />{job.responseCommitmentDays}-day response</span>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5" />
                           {job.location}
@@ -251,6 +277,8 @@ export default function MyPostsPage() {
                           <Clock className="w-3.5 h-3.5" />
                           {job.postedAt}
                         </span>
+                        <span className="font-semibold text-emerald-700">{job.responseRate}% on-time responses</span>
+                        <span>Hiring confirmed {job.hiringConfirmedAt.toLowerCase()}</span>
                       </div>
                     </div>
 
@@ -281,6 +309,16 @@ export default function MyPostsPage() {
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
+                      {job.status === 'Active' && (
+                        <button
+                          onClick={() => reconfirmHiring(job)}
+                          aria-label={`Reconfirm hiring for ${job.title}`}
+                          title="Reconfirm this role is still hiring"
+                          className="p-2 text-gray-400 hover:bg-blue-50 hover:text-[#155eef] rounded-xl transition-colors"
+                        >
+                          <RefreshCcw className="w-4 h-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDelete(job.id)}
                         aria-label={`Delete ${job.title}`}
@@ -331,6 +369,10 @@ export default function MyPostsPage() {
                         <h3 className="text-base font-bold text-gray-900 truncate">{job.title}</h3>
                         <StatusBadge status={job.status} size="sm" />
                       </div>
+                      <div className="mb-3 flex flex-wrap gap-1.5">
+                        {job.verifiedEmployer && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[0.65rem] font-bold text-emerald-700"><BadgeCheck className="h-3.5 w-3.5" />Verified</span>}
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-[0.65rem] font-bold text-[#155eef]"><ShieldCheck className="h-3.5 w-3.5" />{job.responseCommitmentDays} days</span>
+                      </div>
                       <div className="space-y-2 text-sm text-gray-500 mb-4">
                         <div className="flex items-center gap-1.5">
                           <MapPin className="w-3.5 h-3.5" />
@@ -344,6 +386,7 @@ export default function MyPostsPage() {
                           <Clock className="w-3.5 h-3.5" />
                           {job.postedAt}
                         </div>
+                        <div className="text-xs font-semibold text-emerald-700">{job.responseRate}% on-time · confirmed {job.hiringConfirmedAt.toLowerCase()}</div>
                       </div>
                       <div className="flex items-center gap-4 mb-4">
                         <div className="text-center flex-1">

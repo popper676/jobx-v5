@@ -13,6 +13,7 @@ export interface CreateApplicationInput {
   candidateHeadline: string;
   candidateAvatar: string;
   matchScore: number;
+  responseCommitmentDays?: 3 | 5 | 7;
 }
 
 export interface ApplicationResult {
@@ -126,7 +127,7 @@ export const antiGhostingService = {
       candidateHeadline: input.candidateHeadline.trim() || 'JobX candidate',
       candidateAvatar: input.candidateAvatar,
       appliedAt: appliedAt.toISOString(),
-      deadline: new Date(appliedAt.getTime() + RESPONSE_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString(),
+      deadline: new Date(appliedAt.getTime() + (input.responseCommitmentDays || RESPONSE_WINDOW_DAYS) * 24 * 60 * 60 * 1000).toISOString(),
       employerResponded: false,
       status: 'New',
       matchScore: Math.max(0, Math.min(100, Math.round(input.matchScore))),

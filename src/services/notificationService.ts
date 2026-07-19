@@ -1,5 +1,4 @@
 import { db } from './db';
-import { friendService } from './friendService';
 
 export interface Notification {
   id: string;

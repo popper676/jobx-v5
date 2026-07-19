@@ -30,7 +30,7 @@ export default function Settings() {
   const [msgPerms, setMsgPerms] = useState('everyone');
   const [showOnline, setShowOnline] = useState(true);
   
-  const [notifs, setNotifs] = useState({ connections: true, jobs: true, collab: true, comments: false, dms: true, preferEmail: true });
+  const [notifs, setNotifs] = useState({ jobs: true, collab: true, comments: false, dms: true, preferEmail: true });
 
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
@@ -183,7 +183,7 @@ export default function Settings() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-4">
                   <div>
                     <h4 className="text-sm font-semibold text-gray-900">Export your data</h4>
-                    <p className="text-xs text-gray-500 mt-1">Download a copy of your profile, projects, and connections.</p>
+                    <p className="text-xs text-gray-500 mt-1">Download a copy of your profile, projects, and applications.</p>
                   </div>
                   <motion.button onClick={() => triggerSave()} className="mt-3 sm:mt-0 px-4 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-[#F8F3F0] rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Download className="w-4 h-4" /> Request Export
@@ -297,13 +297,12 @@ export default function Settings() {
       case 'Privacy':
         return (
           <>
-            <SectionHeader title="Privacy Options" desc="Control who can see your profile and connect with you." />
+            <SectionHeader title="Privacy Options" desc="Control who can see your profile and contact you." />
             
             <Card title="Profile Visibility" index={0}>
               <div className="space-y-3">
                 {[
                   { id: 'everyone', label: 'Everyone', desc: 'Anyone on the internet can find your profile' },
-                  { id: 'friends', label: 'Connections Only', desc: 'Only your accepted connections can see your details' },
                   { id: 'only_me', label: 'Only Me', desc: 'Make profile completely private (Ghost mode)' }
                 ].map((opt) => (
                   <label key={opt.id} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-[#F8F3F0] transition-colors">
@@ -319,12 +318,12 @@ export default function Settings() {
               </div>
             </Card>
 
-            <Card title="Messaging & Networking" index={1}>
+            <Card title="Messaging" index={1}>
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Who can send you direct messages?</label>
                 <select value={msgPerms} onChange={e => { setMsgPerms(e.target.value); triggerSave(); }} className="w-full p-2.5 bg-[#F8F3F0] border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all">
                   <option value="everyone">Everyone</option>
-                  <option value="connections">Connections Only</option>
+                  <option value="employers">Verified Employers Only</option>
                   <option value="none">No One</option>
                 </select>
               </div>
@@ -355,7 +354,6 @@ export default function Settings() {
             <Card title="In-App Push Notifications" index={0}>
               <div className="space-y-5">
                 {[
-                  { key: 'connections', label: 'New Connection Requests', desc: 'When someone invites you to connect' },
                   { key: 'jobs', label: 'Job Recommendations', desc: 'When we find a job matching your skills' },
                   { key: 'collab', label: 'Project Collab Requests', desc: 'When someone wants to join your project' },
                   { key: 'comments', label: 'Comments on Posts', desc: 'When someone replies to your feed posts' },

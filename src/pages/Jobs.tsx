@@ -23,6 +23,7 @@ import JobFilterPanel from '../components/JobFilterPanel';
 import JobIntelligencePanel from '../components/JobIntelligencePanel';
 import JobXIconTile from '../components/JobXIconTile';
 import JobXCareerSignal from '../components/JobXCareerSignal';
+import JobTrustSignals from '../components/JobTrustSignals';
 import {
   describeCareerSearchIntent,
   getJobIntelligence,
@@ -36,6 +37,7 @@ import {
   toggleFilterValue,
   type JobFilters,
 } from '../services/jobFilterService';
+import { isTrustedJob } from '../services/trustService';
 
 export default function Jobs() {
   const store = useStore();
@@ -44,6 +46,7 @@ export default function Jobs() {
   const [keyword, setKeyword] = useState('');
   const [location, setLocation] = useState('');
   const [filters, setFilters] = useState<JobFilters>(createEmptyJobFilters);
+  const [trustOnly, setTrustOnly] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(MOCK_JOBS[0] ?? null);
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -60,8 +63,9 @@ export default function Jobs() {
     const jobsMatchingLocation = careerSearchResults.map(({ job }) => job).filter((job) => (
       !normalizedLocation || job.location.toLowerCase().includes(normalizedLocation) || job.workplaceType.toLowerCase().includes(normalizedLocation)
     ));
-    return filterJobs(jobsMatchingLocation, filters);
-  }, [careerSearchResults, filters, location]);
+    const jobsMatchingFilters = filterJobs(jobsMatchingLocation, filters);
+    return trustOnly ? jobsMatchingFilters.filter(isTrustedJob) : jobsMatchingFilters;
+  }, [careerSearchResults, filters, location, trustOnly]);
 
   useEffect(() => {
     setSelectedJob((current) => filteredJobs.find((job) => job.id === current?.id) ?? filteredJobs[0] ?? null);
@@ -78,12 +82,13 @@ export default function Jobs() {
     setKeyword('');
     setLocation('');
     setFilters(createEmptyJobFilters());
+    setTrustOnly(false);
   };
 
   const isSaved = (jobId: string) => store.savedJobs.some((savedJob) => savedJob.jobId === jobId);
   const isApplied = (jobId: string) => store.appliedJobs.some((appliedJob) => appliedJob.jobId === jobId);
   const activeFilterCount = getActiveJobFilterCount(filters);
-  const hasActiveFilters = Boolean(keyword || location || keywordInput || locationInput || activeFilterCount);
+  const hasActiveFilters = Boolean(keyword || location || keywordInput || locationInput || activeFilterCount || trustOnly);
 
   const toggleQuickFilter = (filter: 'Remote' | 'Full-time') => {
     if (filter === 'Remote') {
@@ -141,6 +146,7 @@ export default function Jobs() {
             <span className="mr-1 inline-flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400"><SlidersHorizontal className="h-4 w-4" /> Filter</span>
             <button onClick={() => setFilters(createEmptyJobFilters())} aria-pressed={activeFilterCount === 0} className={`product-focus rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors ${activeFilterCount === 0 ? 'bg-[#014BAA] text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>All</button>
             {(['Remote', 'Full-time'] as const).map((filter) => <button key={filter} onClick={() => toggleQuickFilter(filter)} aria-pressed={isQuickFilterActive(filter)} className={`product-focus rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors ${isQuickFilterActive(filter) ? 'bg-[#014BAA] text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>{filter}</button>)}
+            <button onClick={() => setTrustOnly((current) => !current)} aria-pressed={trustOnly} className={`product-focus inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-extrabold transition-colors ${trustOnly ? 'bg-emerald-600 text-white' : 'border border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:bg-slate-900 dark:text-emerald-300'}`}><ShieldCheck className="h-3.5 w-3.5" />Trusted only</button>
             {hasActiveFilters && <button onClick={resetFilters} className="product-focus ml-1 inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-bold text-[#155eef] hover:bg-blue-50 dark:hover:bg-blue-950/50"><X className="h-3.5 w-3.5" /> Clear filters</button>}
             {searchIntentLabel && <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-[#eef4ff] px-3 py-1.5 text-xs font-bold text-[#0c3e9e] dark:bg-blue-950/60 dark:text-blue-200"><JobXCareerSignal className="h-3.5 w-3.5" /> Interpreting: {searchIntentLabel}</span>}
           </div>
@@ -169,10 +175,10 @@ export default function Jobs() {
           {selectedJob ? <>
             <div className="border-b border-slate-100 p-5 sm:p-7 dark:border-slate-800"><div className="flex items-start justify-between gap-4"><div className="flex min-w-0 items-center gap-4"><span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-extrabold text-white shadow-sm ${selectedJob.logoColor}`}>{selectedJob.logoInitials}</span><div className="min-w-0"><p className="text-sm font-extrabold text-slate-900 dark:text-white">{selectedJob.company}</p><h2 className="mt-1 text-2xl font-extrabold tracking-[-0.04em] text-slate-900 dark:text-white sm:text-3xl">{selectedJob.title}</h2></div></div><button onClick={() => toggleSave(selectedJob.id)} aria-label={isSaved(selectedJob.id) ? `Unsave ${selectedJob.title}` : `Save ${selectedJob.title}`} className="product-focus rounded-xl border border-slate-200 p-2.5 text-slate-500 transition-colors hover:border-blue-200 hover:bg-[#eef4ff] hover:text-[#155eef] dark:border-slate-700 dark:hover:bg-blue-950/50">{isSaved(selectedJob.id) ? <BookmarkCheck className="h-5 w-5 text-[#155eef]" /> : <Bookmark className="h-5 w-5" />}</button></div>
               <div className="mt-6 flex flex-wrap gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300"><span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 dark:bg-slate-800"><MapPin className="h-4 w-4 text-[#155eef]" />{selectedJob.location} · {selectedJob.workplaceType}</span><span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 dark:bg-slate-800"><Clock3 className="h-4 w-4 text-[#155eef]" />{selectedJob.type}</span><span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 dark:bg-slate-800"><DollarSign className="h-4 w-4 text-[#155eef]" />{selectedJob.salary}</span></div>
-              <div className="mt-5 flex flex-wrap items-center gap-3"><span className="inline-flex items-center gap-1.5 rounded-full bg-[#eef4ff] px-3 py-1.5 text-xs font-extrabold text-[#0c3e9e] dark:bg-blue-950/60 dark:text-blue-200"><Network aria-hidden="true" className="h-3.5 w-3.5" />{selectedJobIntelligence?.score}% · {selectedJobIntelligence?.label}</span><span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-extrabold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"><ShieldCheck className="h-3.5 w-3.5" />7-day response window</span></div>
+              <div className="mt-5"><span className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#eef4ff] px-3 py-1.5 text-xs font-extrabold text-[#0c3e9e] dark:bg-blue-950/60 dark:text-blue-200"><Network aria-hidden="true" className="h-3.5 w-3.5" />{selectedJobIntelligence?.score}% · {selectedJobIntelligence?.label}</span><JobTrustSignals job={selectedJob} /></div>
             </div>
 
-            <div className="space-y-6 p-5 sm:p-7"><div className="rounded-xl border border-blue-100 bg-[#eef4ff]/65 p-4 dark:border-blue-900/70 dark:bg-blue-950/30"><div className="flex gap-3"><span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white text-[#155eef] shadow-sm dark:bg-slate-900"><ShieldCheck className="h-4 w-4" /></span><div><p className="text-sm font-extrabold text-slate-900 dark:text-white">You will get a visible outcome.</p><p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">This role includes JobX response tracking. The employer’s next decision stays visible in your application tracker.</p></div></div></div><JobIntelligencePanel job={selectedJob} user={store.user} /><div><h3 className="text-sm font-extrabold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">The role</h3><p className="product-copy mt-3 text-sm">{selectedJob.description}</p></div><div><h3 className="text-sm font-extrabold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">What you will bring</h3><ul className="mt-3 grid gap-2 sm:grid-cols-2">{selectedJob.requirements.slice(0, 4).map((requirement) => <li key={requirement} className="flex items-start gap-2 text-sm leading-5 text-slate-700 dark:text-slate-300"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#155eef]" />{requirement}</li>)}</ul></div><div className="flex flex-wrap gap-1.5">{selectedJob.skillsRequired.slice(0, 6).map((skill) => <span key={skill} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">{skill}</span>)}</div>
+            <div className="space-y-6 p-5 sm:p-7"><JobTrustSignals job={selectedJob} variant="full" /><JobIntelligencePanel job={selectedJob} user={store.user} /><div><h3 className="text-sm font-extrabold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">The role</h3><p className="product-copy mt-3 text-sm">{selectedJob.description}</p></div><div><h3 className="text-sm font-extrabold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">What you will bring</h3><ul className="mt-3 grid gap-2 sm:grid-cols-2">{selectedJob.requirements.slice(0, 4).map((requirement) => <li key={requirement} className="flex items-start gap-2 text-sm leading-5 text-slate-700 dark:text-slate-300"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#155eef]" />{requirement}</li>)}</ul></div><div className="flex flex-wrap gap-1.5">{selectedJob.skillsRequired.slice(0, 6).map((skill) => <span key={skill} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">{skill}</span>)}</div>
               {notice && <div role="status" className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm font-semibold ${notice.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200'}`}><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /><span>{notice.message}{notice.type === 'success' && <Link to="/applications" className="ml-1 underline underline-offset-2">Open tracker</Link>}</span></div>}
               <div className="flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row dark:border-slate-800"><button onClick={applyToSelectedJob} disabled={isApplied(selectedJob.id)} className={`product-focus inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-extrabold transition-colors ${isApplied(selectedJob.id) ? 'cursor-default bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200' : 'bg-[#155eef] text-white shadow-lg shadow-blue-600/15 hover:bg-[#0c3e9e]'}`}>{isApplied(selectedJob.id) ? <><CheckCircle2 className="h-4 w-4" /> Applied</> : <><Send className="h-4 w-4" /> Apply to this role</>}</button><Link to={`/jobs/${selectedJob.id}`} className="product-button-secondary product-focus px-5">Full role <ChevronRight className="h-4 w-4" /></Link></div>
             </div>

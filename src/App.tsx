@@ -5,7 +5,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import PageFallback from './components/PageFallback';
 import { useStore } from './store/StoreProvider';
 
-const HomeFeed = lazy(() => import('./pages/HomeFeed'));
 const Landing = lazy(() => import('./pages/Landing'));
 const Jobs = lazy(() => import('./pages/Jobs'));
 const Search = lazy(() => import('./pages/Search'));
@@ -21,14 +20,11 @@ const SignIn = lazy(() => import('./pages/SignIn'));
 const SignUp = lazy(() => import('./pages/SignUp'));
 const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder'));
 const CareerCoach = lazy(() => import('./pages/CareerCoach'));
-const Friends = lazy(() => import('./pages/Friends'));
 const Projects = lazy(() => import('./pages/Projects'));
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
 const Profile = lazy(() => import('./pages/Profile'));
-const FriendProfile = lazy(() => import('./pages/FriendProfile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Messages = lazy(() => import('./pages/Messages'));
-const Shorts = lazy(() => import('./pages/Shorts'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -39,7 +35,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const store = useStore();
-  if (store.auth.isAuthenticated) return <Navigate to="/" replace />;
+  if (store.auth.isAuthenticated) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -50,7 +46,7 @@ export default function App() {
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              <Route index element={<HomeFeed />} />
+              <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="jobs" element={<Jobs />} />
               <Route path="search" element={<Search />} />
               <Route path="jobs/:id" element={<JobDetail />} />
@@ -63,14 +59,11 @@ export default function App() {
               <Route path="applicants" element={<ViewApplicantsPage />} />
               <Route path="resume" element={<ResumeBuilder />} />
               <Route path="career-coach" element={<CareerCoach />} />
-              <Route path="friends" element={<Friends />} />
               <Route path="projects" element={<Projects />} />
               <Route path="projects/:id" element={<ProjectDetail />} />
               <Route path="profile" element={<Profile />} />
-              <Route path="friend/:id" element={<FriendProfile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="messages" element={<Messages />} />
-              <Route path="shorts" element={<Shorts />} />
               <Route path="*" element={<NotFound />} />
             </Route>
             <Route path="landing" element={<PublicRoute><Landing /></PublicRoute>} />

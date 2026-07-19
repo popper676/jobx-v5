@@ -11,13 +11,17 @@ export interface EmployerJob {
   status: EmployerJobStatus;
   applicants: number;
   views: number;
+  responseCommitmentDays: 3 | 5 | 7;
+  responseRate: number;
+  verifiedEmployer: boolean;
+  hiringConfirmedAt: string;
 }
 
 const DEFAULT_EMPLOYER_JOBS: EmployerJob[] = [
-  { id: 'e1', title: 'Senior React Engineer', location: 'San Francisco, CA', salary: '$140k - $170k', postedAt: '2 days ago', status: 'Active', applicants: 18, views: 342 },
-  { id: 'e2', title: 'Product Designer', location: 'Remote', salary: '$110k - $130k', postedAt: '5 days ago', status: 'Active', applicants: 12, views: 198 },
-  { id: 'e3', title: 'Backend Developer (Go)', location: 'New York, NY', salary: '$130k - $160k', postedAt: '1 week ago', status: 'Closed', applicants: 24, views: 567 },
-  { id: 'e4', title: 'DevOps Engineer', location: 'Austin, TX', salary: '$150k - $180k', postedAt: '1 day ago', status: 'Draft', applicants: 0, views: 12 },
+  { id: 'e1', title: 'Senior React Engineer', location: 'San Francisco, CA', salary: '$140k - $170k', postedAt: '2 days ago', status: 'Active', applicants: 18, views: 342, responseCommitmentDays: 5, responseRate: 96, verifiedEmployer: true, hiringConfirmedAt: 'Today' },
+  { id: 'e2', title: 'Product Designer', location: 'Remote', salary: '$110k - $130k', postedAt: '5 days ago', status: 'Active', applicants: 12, views: 198, responseCommitmentDays: 3, responseRate: 92, verifiedEmployer: true, hiringConfirmedAt: 'Today' },
+  { id: 'e3', title: 'Backend Developer (Go)', location: 'New York, NY', salary: '$130k - $160k', postedAt: '1 week ago', status: 'Closed', applicants: 24, views: 567, responseCommitmentDays: 7, responseRate: 84, verifiedEmployer: true, hiringConfirmedAt: 'Yesterday' },
+  { id: 'e4', title: 'DevOps Engineer', location: 'Austin, TX', salary: '$150k - $180k', postedAt: '1 day ago', status: 'Draft', applicants: 0, views: 12, responseCommitmentDays: 5, responseRate: 100, verifiedEmployer: true, hiringConfirmedAt: 'Not live yet' },
 ];
 
 export interface CreateEmployerJobInput {
@@ -28,6 +32,7 @@ export interface CreateEmployerJobInput {
   salaryMax: string;
   payPeriod: string;
   status: Exclude<EmployerJobStatus, 'Closed'>;
+  responseCommitmentDays?: 3 | 5 | 7;
 }
 
 export interface EmployerJobResult {
@@ -56,7 +61,13 @@ function isValidStatus(status: string): status is EmployerJobStatus {
 
 export const employerJobService = {
   getAll(): EmployerJob[] {
-    return db.get<EmployerJob[]>('employer_jobs', DEFAULT_EMPLOYER_JOBS);
+    return db.get<EmployerJob[]>('employer_jobs', DEFAULT_EMPLOYER_JOBS).map((job) => ({
+      responseCommitmentDays: 7,
+      responseRate: 100,
+      verifiedEmployer: true,
+      hiringConfirmedAt: job.status === 'Draft' ? 'Not live yet' : 'Today',
+      ...job,
+    }));
   },
 
   create(input: CreateEmployerJobInput): EmployerJobResult {
@@ -79,6 +90,10 @@ export const employerJobService = {
       status: input.status,
       applicants: 0,
       views: 0,
+      responseCommitmentDays: input.responseCommitmentDays || 7,
+      responseRate: 100,
+      verifiedEmployer: true,
+      hiringConfirmedAt: input.status === 'Draft' ? 'Not live yet' : 'Today',
     };
     return persist([newJob, ...this.getAll()]);
   },
@@ -114,6 +129,19 @@ export const employerJobService = {
 
     const jobs = currentJobs.filter((job) => job.id !== id);
     return persist(jobs);
+  },
+
+  reconfirm(id: string): EmployerJobResult {
+    const currentJobs = this.getAll();
+    const job = currentJobs.find((item) => item.id === id);
+    if (!job) {
+      return { jobs: currentJobs, ok: false, error: 'Job post was not found.' };
+    }
+    if (job.status !== 'Active') {
+      return { jobs: currentJobs, ok: false, error: 'Only active job posts can be reconfirmed.' };
+    }
+
+    return persist(currentJobs.map((item) => item.id === id ? { ...item, hiringConfirmedAt: 'Today' } : item));
   },
 
   reset(): void {

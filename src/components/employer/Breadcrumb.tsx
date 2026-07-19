@@ -15,7 +15,7 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
     <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-4">
       <Link
-        to="/"
+        to="/employer"
         className="flex items-center gap-1 hover:text-[#014BAA] transition-colors"
       >
         <Home className="w-3.5 h-3.5" />
