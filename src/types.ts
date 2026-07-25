@@ -1,4 +1,14 @@
-export type ApplicantStatus = 'New' | 'Viewed' | 'Shortlisted' | 'Rejected' | 'Expired';
+export type ApplicantStatus =
+  | 'New'
+  | 'Viewed'
+  | 'Shortlisted'
+  | 'Phone Screen'
+  | 'Interview'
+  | 'Offer'
+  | 'Hired'
+  | 'On Hold'
+  | 'Rejected'
+  | 'Expired';
 
 export interface Application {
   id: string;

@@ -77,6 +77,39 @@ const generateMockData = (): Application[] => {
       employerResponded: true,
       status: 'Shortlisted',
       matchScore: 82,
+    },
+    {
+      id: 'app_4',
+      jobId: '2',
+      jobTitle: 'Product Designer',
+      companyId: 'company_1',
+      companyName: 'TechFlow',
+      candidateId: 'user_5',
+      candidateName: 'Noah Williams',
+      candidateHeadline: 'Senior Product Designer',
+      candidateAvatar: '',
+      appliedAt: daysAgo(1).toISOString(),
+      deadline: addDays(daysAgo(1), 7).toISOString(),
+      employerResponded: false,
+      status: 'New',
+      matchScore: 91,
+    },
+    {
+      id: 'app_5',
+      jobId: '4',
+      jobTitle: 'DevOps Engineer',
+      companyId: 'company_1',
+      companyName: 'TechFlow',
+      candidateId: 'user_6',
+      candidateName: 'Amina Yusuf',
+      candidateHeadline: 'Cloud & Platform Engineer',
+      candidateAvatar: '',
+      appliedAt: daysAgo(3).toISOString(),
+      deadline: addDays(daysAgo(3), 7).toISOString(),
+      employerResponded: true,
+      respondedAt: daysAgo(2).toISOString(),
+      status: 'Phone Screen',
+      matchScore: 88,
     }
   ];
 };
@@ -88,6 +121,18 @@ export const antiGhostingService = {
       const mock = generateMockData();
       db.set(DB_KEY, mock);
       return mock;
+    }
+    const demoApplicationIds = ['app_1', 'app_2', 'app_3', 'app_4', 'app_5'];
+    const isDemoApplicationSet = apps.every((application) => demoApplicationIds.includes(application.id));
+    if (isDemoApplicationSet) {
+      const missingDemoApplications = generateMockData().filter((mockApplication) => (
+        !apps.some((application) => application.id === mockApplication.id)
+      ));
+      if (missingDemoApplications.length > 0) {
+        const expandedDemo = [...apps, ...missingDemoApplications];
+        db.set(DB_KEY, expandedDemo);
+        return expandedDemo;
+      }
     }
     return apps;
   },
@@ -196,13 +241,17 @@ export const antiGhostingService = {
   },
 
   employerRespondToApplication(applicationId: string, decision: 'accepted' | 'rejected'): Application | null {
+    return this.employerSetApplicationStatus(applicationId, decision === 'accepted' ? 'Shortlisted' : 'Rejected');
+  },
+
+  employerSetApplicationStatus(applicationId: string, status: ApplicantStatus): Application | null {
     const apps = this.getApplications();
     const idx = apps.findIndex(a => a.id === applicationId);
     if (idx === -1) return null;
 
     const app = apps[idx];
     if (app.status === 'Expired') return null; // Can't respond to expired
-    if (new Date().getTime() > new Date(app.deadline).getTime()) {
+    if (!app.employerResponded && new Date().getTime() > new Date(app.deadline).getTime()) {
       apps[idx] = { ...app, status: 'Expired', expiredAt: new Date().toISOString() };
       this.saveApplications(apps);
       return null;
@@ -212,7 +261,7 @@ export const antiGhostingService = {
       ...app,
       employerResponded: true,
       respondedAt: new Date().toISOString(),
-      status: decision === 'accepted' ? 'Shortlisted' : 'Rejected',
+      status,
     };
 
     this.saveApplications(apps);

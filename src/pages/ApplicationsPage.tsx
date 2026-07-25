@@ -12,6 +12,11 @@ function formatDate(date: string): string {
 function statusPresentation(status: ApplicantStatus): { label: string; className: string; icon: React.ReactNode } {
   switch (status) {
     case 'Shortlisted': return { label: 'Shortlisted', className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-900', icon: <CheckCircle2 className="h-3.5 w-3.5" /> };
+    case 'Phone Screen': return { label: 'Phone screen', className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-900', icon: <Clock3 className="h-3.5 w-3.5" /> };
+    case 'Interview': return { label: 'Interview', className: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-200 dark:border-violet-900', icon: <CheckCircle2 className="h-3.5 w-3.5" /> };
+    case 'Offer': return { label: 'Offer', className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-900', icon: <CheckCircle2 className="h-3.5 w-3.5" /> };
+    case 'Hired': return { label: 'Hired', className: 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-100 dark:border-emerald-800', icon: <CheckCircle2 className="h-3.5 w-3.5" /> };
+    case 'On Hold': return { label: 'On hold', className: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700', icon: <Clock3 className="h-3.5 w-3.5" /> };
     case 'Rejected': return { label: 'Not selected', className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-200 dark:border-red-900', icon: <XCircle className="h-3.5 w-3.5" /> };
     case 'Expired': return { label: 'Response window missed', className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-900', icon: <AlertTriangle className="h-3.5 w-3.5" /> };
     case 'Viewed': return { label: 'Viewed', className: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700', icon: <Clock3 className="h-3.5 w-3.5" /> };
@@ -22,6 +27,9 @@ function statusPresentation(status: ApplicantStatus): { label: string; className
 function responseCopy(application: Application): string {
   const onTime = application.employerResponded && (!application.respondedAt || new Date(application.respondedAt).getTime() <= new Date(application.deadline).getTime());
   if (application.status === 'Shortlisted') return onTime ? 'The employer responded within their JobX response window.' : 'The employer responded after the JobX response window.';
+  if (['Phone Screen', 'Interview', 'Offer', 'Hired', 'On Hold'].includes(application.status)) {
+    return `The employer moved your application to ${application.status}.`;
+  }
   if (application.status === 'Rejected') return onTime ? 'The employer closed this application with an on-time update.' : 'The employer closed this application after the response window.';
   if (application.status === 'Expired') return 'JobX recorded that the employer did not respond before the promised deadline.';
   const days = Math.max(1, Math.ceil((new Date(application.deadline).getTime() - Date.now()) / 86_400_000));
@@ -58,13 +66,13 @@ const ApplicationCard: React.FC<{ application: Application }> = ({ application }
   const status = statusPresentation(application.status);
   const responseRate = antiGhostingService.getCompanyResponseRate(application.companyId);
   const responded = application.employerResponded;
-  const progressed = application.status === 'Shortlisted';
+  const progressed = !['New', 'Viewed', 'Rejected', 'Expired'].includes(application.status);
   const commitmentDays = responseCommitmentDays(application);
 
   return (
     <article className="product-surface product-card-interactive p-5 sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">{application.companyName || 'Employer'}</p><h2 className="mt-1 text-lg font-extrabold tracking-[-0.025em] text-slate-900 dark:text-white">{application.jobTitle}</h2><p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">Applied {formatDate(application.appliedAt)}</p></div><span className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold ${status.className}`}>{status.icon}{status.label}</span></div>
-      <div className="mt-6 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-4 dark:border-slate-700 dark:bg-slate-900/60"><ProgressStep label="Applied" completed /><span className={`h-px ${responded ? 'bg-[#155eef]' : 'border-t border-dashed border-slate-300 dark:border-slate-600'}`} /><ProgressStep label="Employer update" completed={responded} active={!responded} /><span className={`h-px ${progressed ? 'bg-[#155eef]' : 'border-t border-dashed border-slate-300 dark:border-slate-600'}`} /><ProgressStep label={progressed ? 'Shortlisted' : 'Next step'} completed={progressed} /></div>
+      <div className="mt-6 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-4 dark:border-slate-700 dark:bg-slate-900/60"><ProgressStep label="Applied" completed /><span className={`h-px ${responded ? 'bg-[#155eef]' : 'border-t border-dashed border-slate-300 dark:border-slate-600'}`} /><ProgressStep label="Employer update" completed={responded} active={!responded} /><span className={`h-px ${progressed ? 'bg-[#155eef]' : 'border-t border-dashed border-slate-300 dark:border-slate-600'}`} /><ProgressStep label={progressed ? application.status : 'Next step'} completed={progressed} /></div>
       <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-3 dark:border-slate-800"><Metric label={`${commitmentDays}-day response deadline`} value={formatDate(application.deadline)} /><Metric label="Employer response rate" value={`${responseRate}% on time`} /><Metric label="Your profile match" value={`${application.matchScore}%`} /></div>
       <p className="mt-5 flex items-start gap-2 text-sm leading-5 text-slate-600 dark:text-slate-300"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#155eef]" />{responseCopy(application)}</p>
     </article>

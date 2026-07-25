@@ -10,7 +10,7 @@ import { myDayService, MyDay, MyDayItem } from '../services/myDayService';
 import { antiGhostingService } from '../services/antiGhostingService';
 import { employerJobService } from '../services/employerJobService';
 import { getJobIntelligence } from '../services/careerIntelligenceService';
-import { Application } from '../types';
+import { Application, ApplicantStatus } from '../types';
 import { getJobTrustProfile } from '../services/trustService';
 
 interface StoreState {
@@ -56,6 +56,7 @@ interface StoreActions {
   markMyDayViewed: (dayId: string) => void;
   deleteMyDay: (dayId: string) => void;
   respondToApplication: (applicationId: string, decision: 'accepted' | 'rejected') => void;
+  setApplicationStatus: (applicationId: string, status: ApplicantStatus) => void;
   resetAll: () => void;
 }
 
@@ -287,6 +288,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const setApplicationStatus = useCallback((applicationId: string, status: ApplicantStatus) => {
+    const application = antiGhostingService.employerSetApplicationStatus(applicationId, status);
+    setApplications(antiGhostingService.getApplications());
+    if (application?.candidateId === userService.get().id) {
+      notificationService.add({
+        type: 'job_alert',
+        userId: 'jobx-system',
+        userName: application.companyName || 'Employer',
+        userAvatar: '',
+        action: 'Application stage updated',
+        title: `Application moved to ${status}`,
+        message: `${application.companyName || 'The employer'} moved your ${application.jobTitle} application to ${status}.`,
+        time: 'Just now',
+        read: false,
+        link: '/applications',
+      });
+      setNotifications(notificationService.getAll());
+    }
+  }, []);
+
   React.useEffect(() => {
     const currentApps = antiGhostingService.getApplications();
     const updatedApps = antiGhostingService.checkExpiredApplications();
@@ -350,7 +371,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     addComment, sharePost, deletePost, updatePost, updatePostVisibility, saveJob, unsaveJob, applyToJob,
     setActiveChat: handleSetActiveChat, sendMessage, searchConversations, searchJobs,
     markNotificationRead, markAllNotificationsRead, addNotification,
-    createMyDay, markMyDayViewed, deleteMyDay, respondToApplication, resetAll,
+    createMyDay, markMyDayViewed, deleteMyDay, respondToApplication, setApplicationStatus, resetAll,
   };
 
   return (

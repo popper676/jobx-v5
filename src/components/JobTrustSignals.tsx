@@ -41,8 +41,9 @@ export default function JobTrustSignals({ job, variant = 'compact' }: JobTrustSi
         <div className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#155eef] text-white shadow-lg shadow-blue-600/15"><ShieldCheck className="h-5 w-5" /></span>
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[#155eef] dark:text-blue-300">JobX Trust Standard</p>
-            <h3 id={`trust-title-${job.id}`} className="mt-1 text-lg font-extrabold tracking-[-0.025em] text-slate-900 dark:text-white">Real work deserves a real answer.</h3>
+            <h2 id={`trust-title-${job.id}`} className="text-3xl font-black leading-none tracking-[-0.055em] text-slate-950 dark:text-white sm:text-4xl">{job.title}</h2>
+            <p className="mt-2 text-xs font-bold text-[#155eef] dark:text-blue-300">{job.company} · {job.location} · {job.type}</p>
+            <h3 className="mt-4 text-lg font-extrabold tracking-[-0.025em] text-slate-900 dark:text-white">Real work deserves a real answer.</h3>
             <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">Job status, response history and salary clarity are visible before you apply.</p>
           </div>
         </div>

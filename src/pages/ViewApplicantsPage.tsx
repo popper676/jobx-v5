@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   BadgeCheck,
   BriefcaseBusiness,
-  CheckCircle2,
   ChevronRight,
   Clock,
   ExternalLink,
@@ -16,7 +15,6 @@ import {
   ShieldCheck,
   UserRound,
   Users,
-  XCircle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import UserAvatar from '../components/UserAvatar';
@@ -30,10 +28,26 @@ import { ApplicantStatus, Application } from '../types';
 import { getApplicantProfile } from '../data/applicantProfiles';
 
 type FilterStatus = 'All' | ApplicantStatus;
+type JobFilter = 'All' | string;
+
+const PIPELINE_STATUSES: ApplicantStatus[] = [
+  'Shortlisted',
+  'Phone Screen',
+  'Interview',
+  'Offer',
+  'Hired',
+  'On Hold',
+  'Rejected',
+];
 
 function statusClass(status: ApplicantStatus): string {
   switch (status) {
     case 'Shortlisted': return 'bg-blue-50 text-[#014BAA] border-blue-200';
+    case 'Phone Screen': return 'bg-cyan-50 text-cyan-700 border-cyan-200';
+    case 'Interview': return 'bg-violet-50 text-violet-700 border-violet-200';
+    case 'Offer': return 'bg-amber-50 text-amber-700 border-amber-200';
+    case 'Hired': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    case 'On Hold': return 'bg-slate-100 text-slate-700 border-slate-200';
     case 'Rejected': return 'bg-red-50 text-red-700 border-red-200';
     case 'Expired': return 'bg-amber-50 text-amber-700 border-amber-200';
     case 'Viewed': return 'bg-[#F8F3F0] text-gray-700 border-gray-200';
@@ -46,8 +60,9 @@ function formatDate(date: string): string {
 }
 
 export default function ViewApplicantsPage() {
-  const { applications, respondToApplication } = useStore();
+  const { applications, setApplicationStatus } = useStore();
   const [filter, setFilter] = useState<FilterStatus>('All');
+  const [jobFilter, setJobFilter] = useState<JobFilter>('All');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
@@ -59,18 +74,32 @@ export default function ViewApplicantsPage() {
     [applications]
   );
   const responseRate = antiGhostingService.getCompanyResponseRate('company_1');
+  const jobs = useMemo(() => {
+    const grouped = new Map<string, { id: string; title: string; count: number; awaiting: number }>();
+    employerApplications.forEach((application) => {
+      const current = grouped.get(application.jobId);
+      grouped.set(application.jobId, {
+        id: application.jobId,
+        title: application.jobTitle,
+        count: (current?.count || 0) + 1,
+        awaiting: (current?.awaiting || 0) + (!application.employerResponded && application.status !== 'Expired' ? 1 : 0),
+      });
+    });
+    return Array.from(grouped.values());
+  }, [employerApplications]);
 
   const filteredApplications = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     return employerApplications.filter((application) => {
       const matchesFilter = filter === 'All' || application.status === filter;
+      const matchesJob = jobFilter === 'All' || application.jobId === jobFilter;
       const matchesQuery = !normalizedQuery ||
         application.candidateName.toLowerCase().includes(normalizedQuery) ||
         application.candidateHeadline.toLowerCase().includes(normalizedQuery) ||
         application.jobTitle.toLowerCase().includes(normalizedQuery);
-      return matchesFilter && matchesQuery;
+      return matchesFilter && matchesJob && matchesQuery;
     });
-  }, [employerApplications, filter, query]);
+  }, [employerApplications, filter, jobFilter, query]);
 
   useEffect(() => {
     if (filteredApplications.some((application) => application.id === selectedId)) return;
@@ -92,9 +121,9 @@ export default function ViewApplicantsPage() {
     });
   };
 
-  const respond = (application: Application, decision: 'accepted' | 'rejected') => {
-    if (application.employerResponded || application.status === 'Expired') return;
-    respondToApplication(application.id, decision);
+  const updateStage = (application: Application, status: ApplicantStatus) => {
+    if (application.status === 'Expired') return;
+    setApplicationStatus(application.id, status);
   };
 
   return (
@@ -127,7 +156,13 @@ export default function ViewApplicantsPage() {
                 >
                   <option value="All">All statuses</option>
                   <option value="New">New</option>
+                  <option value="Viewed">Viewed</option>
                   <option value="Shortlisted">Shortlisted</option>
+                  <option value="Phone Screen">Phone screen</option>
+                  <option value="Interview">Interview</option>
+                  <option value="Offer">Offer</option>
+                  <option value="Hired">Hired</option>
+                  <option value="On Hold">On hold</option>
                   <option value="Rejected">Rejected</option>
                   <option value="Expired">Expired</option>
                 </select>
@@ -150,10 +185,42 @@ export default function ViewApplicantsPage() {
           <CompanyResponseRate rate={responseRate} />
         </div>
 
+        <section className="mb-6 rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm" aria-labelledby="roles-inbox-heading">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 id="roles-inbox-heading" className="text-sm font-bold text-gray-900">Inbox by job role</h2>
+              <p className="mt-0.5 text-xs text-gray-500">Switch roles to manage each hiring pipeline separately.</p>
+            </div>
+            <span className="text-xs font-semibold text-gray-400">{jobs.length} active job pipeline{jobs.length === 1 ? '' : 's'}</span>
+          </div>
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+            <button
+              type="button"
+              onClick={() => setJobFilter('All')}
+              className={`shrink-0 rounded-xl border px-3 py-2 text-left transition-colors ${jobFilter === 'All' ? 'border-[#014BAA] bg-blue-50 text-[#014BAA]' : 'border-gray-200 bg-white text-gray-600 hover:border-blue-200'}`}
+            >
+              <span className="block text-xs font-bold">All jobs</span>
+              <span className="mt-0.5 block text-[10px] font-medium opacity-70">{employerApplications.length} candidates</span>
+            </button>
+            {jobs.map((job) => (
+              <button
+                type="button"
+                key={job.id}
+                onClick={() => setJobFilter(job.id)}
+                className={`min-w-44 shrink-0 rounded-xl border px-3 py-2 text-left transition-colors ${jobFilter === job.id ? 'border-[#014BAA] bg-blue-50 text-[#014BAA]' : 'border-gray-200 bg-white text-gray-600 hover:border-blue-200'}`}
+              >
+                <span className="block truncate text-xs font-bold">{job.title}</span>
+                <span className="mt-0.5 flex items-center justify-between gap-3 text-[10px] font-medium opacity-70"><span>{job.count} candidates</span>{job.awaiting > 0 && <span>{job.awaiting} waiting</span>}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
           <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
             <div className="border-b border-gray-100 px-5 py-4">
-              <h2 className="text-sm font-bold text-gray-900">Applicants</h2>
+              <h2 className="text-sm font-bold text-gray-900">{jobFilter === 'All' ? 'All applicants' : jobs.find((job) => job.id === jobFilter)?.title}</h2>
+              <p className="mt-0.5 text-xs text-gray-500">{filteredApplications.length} candidate{filteredApplications.length === 1 ? '' : 's'} in this view</p>
             </div>
             {filteredApplications.length === 0 ? (
               <div className="p-6">
@@ -345,18 +412,41 @@ export default function ViewApplicantsPage() {
                   <div role="status" className="mt-5 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> This response window has expired and has been recorded in the employer response rate.
                   </div>
-                ) : selected.employerResponded ? (
-                  <div role="status" className="mt-5 flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm font-medium text-[#014BAA]">
-                    <ShieldCheck className="h-4 w-4" /> Candidate notified {selected.respondedAt ? formatDate(selected.respondedAt) : ''}
-                  </div>
                 ) : (
-                  <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                    <button onClick={() => respond(selected, 'accepted')} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#014BAA] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#013b86]">
-                      <CheckCircle2 className="h-4 w-4" /> Shortlist candidate
-                    </button>
-                    <button onClick={() => respond(selected, 'rejected')} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50">
-                      <XCircle className="h-4 w-4" /> Send decline update
-                    </button>
+                  <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">Candidate hiring stage</p>
+                        <p className="mt-1 text-xs text-gray-500">Changing the stage sends this candidate a clear update.</p>
+                      </div>
+                      <select
+                        value={PIPELINE_STATUSES.includes(selected.status) ? selected.status : ''}
+                        onChange={(event) => updateStage(selected, event.target.value as ApplicantStatus)}
+                        aria-label={`Change hiring stage for ${selected.candidateName}`}
+                        className="min-w-44 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 outline-none focus:border-[#014BAA] focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="" disabled>Choose stage</option>
+                        {PIPELINE_STATUSES.map((status) => <option key={status} value={status}>{status === 'Rejected' ? 'Declined' : status}</option>)}
+                      </select>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {PIPELINE_STATUSES.map((status) => (
+                        <button
+                          key={status}
+                          type="button"
+                          onClick={() => updateStage(selected, status)}
+                          aria-pressed={selected.status === status}
+                          className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${selected.status === status ? statusClass(status) : 'border-gray-200 bg-white text-gray-600 hover:border-blue-200 hover:bg-blue-50/50'}`}
+                        >
+                          {status === 'Rejected' ? 'Decline' : status}
+                        </button>
+                      ))}
+                    </div>
+                    {selected.employerResponded && (
+                      <div role="status" className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-4 text-xs font-medium text-[#014BAA]">
+                        <ShieldCheck className="h-4 w-4" /> Candidate notified {selected.respondedAt ? formatDate(selected.respondedAt) : ''}
+                      </div>
+                    )}
                   </div>
                 )}
                 </div>
