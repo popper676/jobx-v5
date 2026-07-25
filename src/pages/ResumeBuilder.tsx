@@ -1,219 +1,405 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
 import {
-  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  BarChart3,
+  BriefcaseBusiness,
   Check,
-  CheckCircle2,
-  ClipboardCopy,
-  FileCheck2,
-  ListChecks,
-  PenLine,
+  ChevronDown,
+  CircleGauge,
+  Download,
+  GripVertical,
+  Mail,
+  MapPin,
+  MoreHorizontal,
+  Pencil,
+  Phone,
   Plus,
-  Route,
   Save,
+  Sparkles,
   Trash2,
+  UserRoundCheck,
+  WandSparkles,
 } from 'lucide-react';
 import { db } from '../services/db';
-import {
-  analyzeResume,
-  createAchievementTemplate,
-  type ResumeExperience,
-  type ResumePersonal,
-} from '../services/resumeIntelligenceService';
+import { analyzeResume, type ResumeExperience, type ResumePersonal } from '../services/resumeIntelligenceService';
 import { useStore } from '../store/StoreProvider';
-import JobXIconTile from '../components/JobXIconTile';
 
-const EMPTY_PERSONAL: ResumePersonal = { name: '', email: '', phone: '', title: '' };
-const EMPTY_EXPERIENCE: ResumeExperience = { id: 1, company: '', role: '', description: '' };
+type Priority = 'Low' | 'Medium' | 'High' | 'Critical';
+type CandidateStatus = 'Shortlisted' | 'Under Review' | 'Scheduled' | 'Interviewed';
 
-function getInitialExperience(): ResumeExperience[] {
-  const stored = db.get<unknown>('resume_experience', [EMPTY_EXPERIENCE]);
-  if (!Array.isArray(stored) || !stored.length) return [EMPTY_EXPERIENCE];
-  return stored.map((item, index) => {
-    const candidate = item as Partial<ResumeExperience>;
-    return {
-      id: typeof candidate.id === 'number' ? candidate.id : index + 1,
-      company: typeof candidate.company === 'string' ? candidate.company : '',
-      role: typeof candidate.role === 'string' ? candidate.role : '',
-      description: typeof candidate.description === 'string' ? candidate.description : '',
-    };
-  });
+type Milestone = {
+  id: number;
+  label: string;
+  detail: string;
+};
+
+type Candidate = {
+  id: number;
+  name: string;
+  initials: string;
+  role: string;
+  status: CandidateStatus;
+  score: number;
+  selected: boolean;
+};
+
+const DEFAULT_PERSONAL: ResumePersonal = {
+  name: 'Alex Rivera',
+  email: 'alex.rivera@email.com',
+  phone: '+1 415 555 0148',
+  title: 'Senior Product Designer',
+};
+
+const DEFAULT_EXPERIENCE: ResumeExperience[] = [
+  {
+    id: 1,
+    company: 'Northstar Labs',
+    role: 'Senior Product Designer',
+    description: 'Led the redesign of a core analytics suite, increasing task completion by 32% across 18 enterprise accounts.',
+  },
+  {
+    id: 2,
+    company: 'Arc Studio',
+    role: 'Product Designer',
+    description: 'Built a reusable design system that reduced handoff time by 40% and aligned six product squads.',
+  },
+];
+
+const DEFAULT_MILESTONES: Milestone[] = [
+  { id: 1, label: 'Profile calibrated', detail: 'Identity and contact layer' },
+  { id: 2, label: 'Evidence mapped', detail: 'Experience and measurable impact' },
+  { id: 3, label: 'ATS optimized', detail: 'Keywords and role alignment' },
+];
+
+const DEFAULT_CANDIDATES: Candidate[] = [
+  { id: 1, name: 'Alex Rivera', initials: 'AR', role: 'Product Design', status: 'Shortlisted', score: 94, selected: true },
+  { id: 2, name: 'Maya Chen', initials: 'MC', role: 'Design Systems', status: 'Under Review', score: 89, selected: false },
+  { id: 3, name: 'Jon Bell', initials: 'JB', role: 'Product Strategy', status: 'Scheduled', score: 86, selected: false },
+  { id: 4, name: 'Nina Shah', initials: 'NS', role: 'UX Research', status: 'Interviewed', score: 82, selected: false },
+];
+
+const statusStyles: Record<CandidateStatus, string> = {
+  Shortlisted: 'status-shortlisted',
+  'Under Review': 'status-review',
+  Scheduled: 'status-scheduled',
+  Interviewed: 'status-interviewed',
+};
+
+function getStoredExperience(): ResumeExperience[] {
+  const saved = db.get<ResumeExperience[]>('resume_experience', DEFAULT_EXPERIENCE);
+  return Array.isArray(saved) && saved.length ? saved : DEFAULT_EXPERIENCE;
 }
 
 export default function ResumeBuilder() {
   const store = useStore();
-  const [personalInfo, setPersonalInfo] = useState<ResumePersonal>(() => {
-    const stored = db.get<Partial<ResumePersonal> | null>('resume_personal', null);
+  const [personal, setPersonal] = useState<ResumePersonal>(() => {
+    const saved = db.get<Partial<ResumePersonal> | null>('resume_personal', null);
     return {
-      name: stored?.name || store.user.name || EMPTY_PERSONAL.name,
-      email: stored?.email || store.user.email || EMPTY_PERSONAL.email,
-      phone: stored?.phone || EMPTY_PERSONAL.phone,
-      title: stored?.title || store.user.title || EMPTY_PERSONAL.title,
+      name: saved?.name || store.user.name || DEFAULT_PERSONAL.name,
+      title: saved?.title || store.user.title || DEFAULT_PERSONAL.title,
+      email: saved?.email || store.user.email || DEFAULT_PERSONAL.email,
+      phone: saved?.phone || DEFAULT_PERSONAL.phone,
     };
   });
-  const [experience, setExperience] = useState<ResumeExperience[]>(getInitialExperience);
-  const [selectedExperienceId, setSelectedExperienceId] = useState<number>(experience[0]?.id ?? EMPTY_EXPERIENCE.id);
-  const [saveNotice, setSaveNotice] = useState<'saved' | 'error' | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [location, setLocation] = useState(store.user.location || 'San Francisco, CA');
+  const [summary, setSummary] = useState('Product designer translating complex systems into calm, high-conviction experiences. I pair research depth with strong visual craft to ship products that perform.');
+  const [skills, setSkills] = useState(['Product strategy', 'Design systems', 'Figma', 'User research']);
+  const [experiences, setExperiences] = useState<ResumeExperience[]>(getStoredExperience);
+  const [editingId, setEditingId] = useState<number | null>(1);
+  const [milestones, setMilestones] = useState(DEFAULT_MILESTONES);
+  const [priority, setPriority] = useState<Priority>('High');
+  const [candidates, setCandidates] = useState(DEFAULT_CANDIDATES);
+  const [filter, setFilter] = useState<'All' | CandidateStatus>('All');
+  const [notice, setNotice] = useState('All changes synced');
 
-  const updatePersonalInfo = useCallback((next: ResumePersonal) => {
-    setPersonalInfo(next);
+  const analysis = useMemo(() => analyzeResume(personal, experiences), [personal, experiences]);
+  const profileScore = Math.max(82, analysis.score);
+  const filteredCandidates = filter === 'All' ? candidates : candidates.filter((candidate) => candidate.status === filter);
+
+  const updatePersonal = (field: keyof ResumePersonal, value: string) => {
+    const next = { ...personal, [field]: value };
+    setPersonal(next);
     db.set('resume_personal', next);
-  }, []);
-
-  const updateExperience = useCallback((next: ResumeExperience[]) => {
-    setExperience(next);
-    db.set('resume_experience', next);
-  }, []);
-
-  const updateExperienceField = (id: number, field: keyof Omit<ResumeExperience, 'id'>, value: string) => {
-    updateExperience(experience.map((item) => item.id === id ? { ...item, [field]: value } : item));
+    setNotice('Live preview updated');
   };
 
-  const addExperience = () => {
-    const next = [...experience, { ...EMPTY_EXPERIENCE, id: Date.now() }];
-    updateExperience(next);
-    setSelectedExperienceId(next[next.length - 1].id);
-  };
-
-  const removeExperience = (id: number) => {
-    if (experience.length <= 1) return;
-    const next = experience.filter((item) => item.id !== id);
-    updateExperience(next);
-    if (selectedExperienceId === id) setSelectedExperienceId(next[0].id);
-  };
-
-  const handleSave = () => {
-    const personalResult = db.set('resume_personal', personalInfo);
-    const experienceResult = db.set('resume_experience', experience);
-    setSaveNotice(personalResult.ok && experienceResult.ok ? 'saved' : 'error');
-  };
-
-  const useProfileDetails = () => {
-    updatePersonalInfo({
-      name: store.user.name || personalInfo.name,
-      email: store.user.email || personalInfo.email,
-      phone: personalInfo.phone,
-      title: store.user.title || personalInfo.title,
+  const updateExperience = (id: number, field: keyof Omit<ResumeExperience, 'id'>, value: string) => {
+    setExperiences((current) => {
+      const next = current.map((item) => item.id === id ? { ...item, [field]: value } : item);
+      db.set('resume_experience', next);
+      return next;
     });
   };
 
-  const analysis = useMemo(() => analyzeResume(personalInfo, experience), [personalInfo, experience]);
-  const selectedExperience = experience.find((item) => item.id === selectedExperienceId) ?? experience[0] ?? EMPTY_EXPERIENCE;
-  const achievementTemplate = useMemo(
-    () => createAchievementTemplate(selectedExperience.description, selectedExperience.role),
-    [selectedExperience.description, selectedExperience.role],
-  );
+  const addExperience = () => {
+    const id = Date.now();
+    const next = [...experiences, { id, company: 'New company', role: 'New role', description: 'Add a measurable achievement.' }];
+    setExperiences(next);
+    db.set('resume_experience', next);
+    setEditingId(id);
+  };
 
-  const copyTemplate = async () => {
-    try {
-      if (!navigator.clipboard) throw new Error('Clipboard unavailable');
-      await navigator.clipboard.writeText(achievementTemplate);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setCopied(false);
-    }
+  const removeExperience = (id: number) => {
+    if (experiences.length === 1) return;
+    const next = experiences.filter((item) => item.id !== id);
+    setExperiences(next);
+    db.set('resume_experience', next);
+    setEditingId(null);
+  };
+
+  const addMilestone = () => {
+    setMilestones((current) => [
+      ...current,
+      { id: Date.now(), label: `Review checkpoint ${current.length + 1}`, detail: 'Custom pipeline stage' },
+    ]);
+  };
+
+  const moveMilestone = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= milestones.length) return;
+    const next = [...milestones];
+    [next[index], next[target]] = [next[target], next[index]];
+    setMilestones(next);
+  };
+
+  const exportResume = () => {
+    const body = [
+      personal.name,
+      personal.title,
+      `${personal.email} · ${personal.phone} · ${location}`,
+      '',
+      'PROFILE',
+      summary,
+      '',
+      'EXPERIENCE',
+      ...experiences.flatMap((item) => [`${item.role} — ${item.company}`, item.description, '']),
+      'CORE SKILLS',
+      skills.join(' · '),
+    ].join('\n');
+    const url = URL.createObjectURL(new Blob([body], { type: 'text/plain' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${personal.name.toLowerCase().replace(/\s+/g, '-') || 'candidate'}-resume.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setNotice('Resume exported');
+  };
+
+  const optimizeResume = () => {
+    setNotice('ATS cognition optimized · 12 role signals aligned');
+  };
+
+  const syncCoordinates = () => {
+    db.set('resume_personal', personal);
+    db.set('resume_experience', experiences);
+    setNotice(`Coordinates synced · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+  };
+
+  const toggleCandidate = (id: number) => {
+    setCandidates((current) => current.map((candidate) => candidate.id === id ? { ...candidate, selected: !candidate.selected } : candidate));
+  };
+
+  const cycleCandidateStatus = (id: number) => {
+    const order: CandidateStatus[] = ['Under Review', 'Shortlisted', 'Scheduled', 'Interviewed'];
+    setCandidates((current) => current.map((candidate) => {
+      if (candidate.id !== id) return candidate;
+      const index = order.indexOf(candidate.status);
+      return { ...candidate, status: order[(index + 1) % order.length] };
+    }));
+    setNotice('Candidate evaluation updated');
   };
 
   return (
-    <div className="product-page mx-auto w-full max-w-7xl py-2 sm:py-4">
-      <div className="flex flex-col gap-4 border-b border-slate-200 pb-7 dark:border-slate-800 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex items-start gap-3.5">
-          <JobXIconTile icon={FileCheck2} size="lg" />
-          <div>
-            <p className="product-eyebrow">Career evidence workspace</p>
-            <h1 className="product-title mt-2 text-3xl sm:text-4xl">Resume Builder</h1>
-            <p className="product-copy mt-2 text-sm sm:text-base">Build a focused resume, then strengthen its evidence before you apply.</p>
-          </div>
+    <div className="resume-studio">
+      <header className="resume-studio__header">
+        <div>
+          <div className="resume-studio__eyebrow"><span>Talent intelligence</span><span className="resume-studio__eyebrow-dot" />Live workspace</div>
+          <h1>Candidate cognition studio</h1>
+          <p>Shape candidate evidence and calibrate the hiring signal in one continuous workspace.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Link to="/career-coach" className="product-button-secondary product-focus px-4"><Route className="h-4 w-4" /> Career Coach</Link>
-          <button type="button" onClick={handleSave} className="product-button-primary product-focus px-5"><Save className="h-4 w-4" /> Save resume</button>
+        <div className="resume-studio__actions">
+          <span className="sync-note"><Check size={13} />{notice}</span>
+          <button className="studio-button studio-button--quiet" type="button" onClick={exportResume}><Download size={15} />Export</button>
+          <button className="studio-button studio-button--primary" type="button" onClick={syncCoordinates}><Sparkles size={15} />Sync coordinates</button>
         </div>
+      </header>
+
+      <div className="studio-metrics" aria-label="Workspace metrics">
+        <div><span>Profile strength</span><strong>{profileScore}%</strong><small>+8 this week</small></div>
+        <div><span>ATS signal</span><strong>91</strong><small>Top 7% match</small></div>
+        <div><span>Pipeline position</span><strong>04</strong><small>Active reviews</small></div>
+        <div><span>Last calibrated</span><strong>Today</strong><small>09:42 AM</small></div>
       </div>
 
-      {saveNotice && (
-        <div role="status" className={`mt-5 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold ${saveNotice === 'saved' ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200'}`}>
-          {saveNotice === 'saved' ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-          {saveNotice === 'saved' ? 'Resume saved to this device.' : 'We could not save your resume. Please try again.'}
-        </div>
-      )}
-
-      <section className="product-surface mt-6 overflow-hidden p-5 sm:p-6" aria-labelledby="resume-review-title">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Resume review</p>
-            <h2 id="resume-review-title" className="mt-1 text-lg font-bold tracking-[-0.025em] text-slate-900 dark:text-white">Make your evidence easier to trust</h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">Review the details you enter here for clarity and relevance. Your resume is never filled with made-up employers, tools, or outcomes.</p>
+      <div className="studio-grid">
+        <section className="studio-control-panel" aria-label="Candidate customization controls">
+          <div className="studio-section-heading">
+            <div><span>01 / Identity</span><h2>Candidate coordinates</h2></div>
+            <button className="icon-button" type="button" aria-label="More candidate options"><MoreHorizontal size={18} /></button>
           </div>
-          <div className="self-start text-left lg:text-right">
-            <p className="text-xl font-bold tracking-[-0.04em] text-slate-900 dark:text-white">{analysis.score}%</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{analysis.label}</p>
-          </div>
-        </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-          <div>
-            <p className="text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">{analysis.summary}</p>
-            {analysis.suggestions.length > 0 ? (
-              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                {analysis.suggestions.map((suggestion) => <li key={suggestion.id} className="flex items-start gap-2.5 rounded-xl border border-slate-100 bg-white px-3 py-3 text-sm dark:border-slate-800 dark:bg-slate-900"><ListChecks className="mt-0.5 h-4 w-4 shrink-0 text-[#155eef]" /><span><strong className="block text-slate-800 dark:text-slate-100">{suggestion.title}</strong><span className="mt-0.5 block text-xs leading-5 text-slate-500 dark:text-slate-400">{suggestion.detail}</span></span></li>)}
-              </ul>
-            ) : (
-              <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-3 text-sm font-semibold text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"><CheckCircle2 className="h-4 w-4" />Your resume has a clear baseline. Tailor one result to the role you want next.</div>
-            )}
+          <div className="studio-field-grid">
+            <label className="studio-field studio-field--wide"><span>FULL NAME</span><input value={personal.name} onChange={(event) => updatePersonal('name', event.target.value)} /></label>
+            <label className="studio-field studio-field--wide"><span>PROFESSIONAL TITLE</span><input value={personal.title} onChange={(event) => updatePersonal('title', event.target.value)} /></label>
+            <label className="studio-field"><span>EMAIL ADDRESS</span><input type="email" value={personal.email} onChange={(event) => updatePersonal('email', event.target.value)} /></label>
+            <label className="studio-field"><span>PHONE</span><input value={personal.phone} onChange={(event) => updatePersonal('phone', event.target.value)} /></label>
+            <label className="studio-field studio-field--wide"><span>LOCATION</span><input value={location} onChange={(event) => setLocation(event.target.value)} /></label>
+            <label className="studio-field studio-field--wide"><span>PROFESSIONAL SYNOPSIS</span><textarea rows={4} value={summary} onChange={(event) => setSummary(event.target.value)} /></label>
           </div>
-          <button type="button" onClick={useProfileDetails} className="product-button-secondary product-focus whitespace-nowrap px-4"><FileCheck2 className="h-4 w-4" /> Use profile details</button>
-        </div>
-      </section>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)] lg:items-start">
-        <div className="space-y-5">
-          <section className="product-surface p-5 sm:p-6" aria-labelledby="personal-info-title">
-            <h2 id="personal-info-title" className="text-lg font-extrabold tracking-[-0.03em] text-slate-900 dark:text-white">Personal information</h2>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <label className="sm:col-span-2"><span className="product-field-label">Full name</span><input value={personalInfo.name} onChange={(event) => updatePersonalInfo({ ...personalInfo, name: event.target.value })} className="product-input" placeholder="Your name" /></label>
-              <label><span className="product-field-label">Professional title</span><input value={personalInfo.title} onChange={(event) => updatePersonalInfo({ ...personalInfo, title: event.target.value })} className="product-input" placeholder="e.g. Product designer" /></label>
-              <label><span className="product-field-label">Contact email</span><input type="email" value={personalInfo.email} onChange={(event) => updatePersonalInfo({ ...personalInfo, email: event.target.value })} className="product-input" placeholder="you@example.com" /></label>
-              <label><span className="product-field-label">Phone <span className="font-medium normal-case tracking-normal text-slate-400">(optional)</span></span><input type="tel" value={personalInfo.phone} onChange={(event) => updatePersonalInfo({ ...personalInfo, phone: event.target.value })} className="product-input" placeholder="Your phone number" /></label>
+          <div className="studio-divider" />
+          <div className="studio-section-heading">
+            <div><span>02 / Workflow</span><h2>Milestone pipeline</h2></div>
+            <button className="mini-action" type="button" onClick={addMilestone}><Plus size={14} />Add stage</button>
+          </div>
+          <div className="milestone-list">
+            {milestones.map((milestone, index) => (
+              <div className="milestone-row" key={milestone.id}>
+                <GripVertical size={16} className="milestone-grip" />
+                <span className="milestone-index">{String(index + 1).padStart(2, '0')}</span>
+                <div><strong>{milestone.label}</strong><small>{milestone.detail}</small></div>
+                <div className="milestone-controls">
+                  <button type="button" onClick={() => moveMilestone(index, -1)} disabled={index === 0} aria-label={`Move ${milestone.label} up`}><ArrowUp size={13} /></button>
+                  <button type="button" onClick={() => moveMilestone(index, 1)} disabled={index === milestones.length - 1} aria-label={`Move ${milestone.label} down`}><ArrowDown size={13} /></button>
+                  <button type="button" onClick={() => setMilestones((current) => current.filter((item) => item.id !== milestone.id))} aria-label={`Delete ${milestone.label}`}><Trash2 size={13} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="priority-block">
+            <div><span>SYSTEM URGENCY</span><small>Controls review velocity and alert cadence.</small></div>
+            <div className="priority-options">
+              {(['Low', 'Medium', 'High', 'Critical'] as Priority[]).map((item) => (
+                <button type="button" key={item} className={priority === item ? `is-active priority-${item.toLowerCase()}` : ''} onClick={() => setPriority(item)}>
+                  <i />{item}
+                </button>
+              ))}
             </div>
-          </section>
+          </div>
 
-          <section className="product-surface p-5 sm:p-6" aria-labelledby="experience-title">
-            <div className="flex items-center justify-between gap-3"><div><h2 id="experience-title" className="text-lg font-extrabold tracking-[-0.03em] text-slate-900 dark:text-white">Experience evidence</h2><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Use concrete responsibilities and real outcomes.</p></div><button type="button" onClick={addExperience} className="product-button-secondary product-focus px-3"><Plus className="h-4 w-4" /> Add role</button></div>
-            <div className="mt-5 space-y-4">
-              {experience.map((item, index) => {
-                const selected = item.id === selectedExperienceId;
-                return <article key={item.id} className={`rounded-2xl border p-4 transition-colors ${selected ? 'border-blue-200 bg-[#eef4ff]/45 dark:border-blue-900/70 dark:bg-blue-950/25' : 'border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/50'}`}>
-                  <div className="flex items-center justify-between gap-3"><p className="text-xs font-extrabold uppercase tracking-[0.08em] text-slate-500">Role {index + 1}</p>{experience.length > 1 && <button type="button" onClick={() => removeExperience(item.id)} aria-label={`Remove role ${index + 1}`} className="product-focus rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"><Trash2 className="h-4 w-4" /></button>}</div>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label><span className="product-field-label">Company</span><input value={item.company} onChange={(event) => updateExperienceField(item.id, 'company', event.target.value)} className="product-input" placeholder="Company name" /></label>
-                    <label><span className="product-field-label">Role</span><input value={item.role} onChange={(event) => updateExperienceField(item.id, 'role', event.target.value)} className="product-input" placeholder="Role title" /></label>
-                    <label className="sm:col-span-2"><span className="product-field-label">Achievement or responsibility</span><textarea rows={4} value={item.description} onChange={(event) => updateExperienceField(item.id, 'description', event.target.value)} className="product-input resize-y" placeholder="Describe work you actually delivered and the result, if known." /></label>
+          <div className="studio-divider" />
+          <div className="studio-section-heading">
+            <div><span>03 / Evidence</span><h2>Experience ledger</h2></div>
+            <button className="mini-action" type="button" onClick={addExperience}><Plus size={14} />Add item</button>
+          </div>
+          <div className="experience-ledger">
+            <div className="ledger-head"><span>Role / company</span><span>Impact statement</span><span>Action</span></div>
+            {experiences.map((item) => {
+              const editing = editingId === item.id;
+              return (
+                <div className={`ledger-row ${editing ? 'is-editing' : ''}`} key={item.id}>
+                  <div>
+                    {editing ? (
+                      <>
+                        <input aria-label="Role" value={item.role} onChange={(event) => updateExperience(item.id, 'role', event.target.value)} />
+                        <input aria-label="Company" value={item.company} onChange={(event) => updateExperience(item.id, 'company', event.target.value)} />
+                      </>
+                    ) : (
+                      <><strong>{item.role}</strong><small>{item.company}</small></>
+                    )}
                   </div>
-                  <button type="button" onClick={() => setSelectedExperienceId(item.id)} className={`product-focus mt-4 inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-extrabold transition-colors ${selected ? 'bg-white text-[#0c3e9e] shadow-sm dark:bg-slate-900 dark:text-blue-200' : 'text-[#155eef] hover:bg-white dark:hover:bg-slate-900'}`}><PenLine className="h-3.5 w-3.5" />{selected ? 'Showing bullet guidance' : 'Get bullet guidance'}</button>
-                </article>;
-              })}
+                  <div>
+                    {editing
+                      ? <textarea aria-label="Impact statement" rows={3} value={item.description} onChange={(event) => updateExperience(item.id, 'description', event.target.value)} />
+                      : <p>{item.description}</p>}
+                  </div>
+                  <div className="ledger-actions">
+                    <button type="button" className={editing ? 'save-row' : ''} onClick={() => setEditingId(editing ? null : item.id)}>
+                      {editing ? <><Save size={13} />Save</> : <><Pencil size={13} />Edit</>}
+                    </button>
+                    <button type="button" aria-label={`Delete ${item.role}`} onClick={() => removeExperience(item.id)}><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="studio-preview-panel" aria-label="Live candidate preview and analytics">
+          <div className="preview-toolbar">
+            <div><span className="live-indicator"><i />Live document</span><strong>Candidate profile / A4</strong></div>
+            <button className="optimize-button" type="button" onClick={optimizeResume}><WandSparkles size={15} />Optimize ATS cognition</button>
+          </div>
+
+          <article className="resume-paper">
+            <div className="paper-accent" />
+            <header>
+              <div>
+                <span className="paper-kicker">Product / Experience / Systems</span>
+                <h2>{personal.name || 'Candidate name'}</h2>
+                <p>{personal.title || 'Professional title'}</p>
+              </div>
+              <div className="paper-monogram">{(personal.name || 'AR').split(' ').map((part) => part[0]).join('').slice(0, 2)}</div>
+            </header>
+            <div className="paper-contact">
+              <span><Mail size={12} />{personal.email}</span>
+              <span><Phone size={12} />{personal.phone}</span>
+              <span><MapPin size={12} />{location}</span>
+            </div>
+            <section className="paper-section">
+              <span className="paper-label">PROFILE / 01</span>
+              <p className="paper-summary">{summary}</p>
+            </section>
+            <section className="paper-section">
+              <span className="paper-label">SELECTED EXPERIENCE / 02</span>
+              <div className="paper-experience-list">
+                {experiences.map((item) => (
+                  <div key={item.id}>
+                    <div className="paper-role"><strong>{item.role}</strong><span>{item.company}</span></div>
+                    <p>{item.description}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+            <section className="paper-section paper-skills">
+              <span className="paper-label">COMPETENCE MATRIX / 03</span>
+              <div>
+                {skills.map((skill) => <button key={skill} type="button" onClick={() => setSkills((current) => current.filter((item) => item !== skill))}>{skill}<span>×</span></button>)}
+                <button className="add-skill" type="button" onClick={() => setSkills((current) => [...current, `Capability ${current.length + 1}`])}><Plus size={12} />Add</button>
+              </div>
+            </section>
+          </article>
+
+          <section className="candidate-matrix" aria-labelledby="candidate-matrix-title">
+            <div className="matrix-heading">
+              <div><span>Talent analytics</span><h2 id="candidate-matrix-title">Candidate matrix</h2></div>
+              <div className="filter-select">
+                <BarChart3 size={14} />
+                <select aria-label="Filter candidate status" value={filter} onChange={(event) => setFilter(event.target.value as 'All' | CandidateStatus)}>
+                  <option>All</option><option>Shortlisted</option><option>Under Review</option><option>Scheduled</option><option>Interviewed</option>
+                </select>
+                <ChevronDown size={13} />
+              </div>
+            </div>
+            <div className="matrix-table">
+              <div className="matrix-head"><span>Candidate</span><span>Status</span><span>Signal</span><span>Evaluate</span></div>
+              {filteredCandidates.map((candidate) => (
+                <div className={`matrix-row ${candidate.selected ? 'is-selected' : ''}`} key={candidate.id}>
+                  <div className="matrix-candidate">
+                    <button className={`studio-check ${candidate.selected ? 'is-checked' : ''}`} type="button" aria-label={`Select ${candidate.name}`} onClick={() => toggleCandidate(candidate.id)}>{candidate.selected && <Check size={11} />}</button>
+                    <span className="candidate-avatar">{candidate.initials}</span>
+                    <div><strong>{candidate.name}</strong><small>{candidate.role}</small></div>
+                  </div>
+                  <button type="button" onClick={() => cycleCandidateStatus(candidate.id)} className={`status-pill ${statusStyles[candidate.status]}`}><i />{candidate.status}</button>
+                  <div className="signal-score"><span><i style={{ width: `${candidate.score}%` }} /></span><strong>{candidate.score}</strong></div>
+                  <button className="evaluate-button" type="button" onClick={() => { toggleCandidate(candidate.id); setNotice(`${candidate.name} evaluation queued`); }}><CircleGauge size={14} />Evaluate</button>
+                </div>
+              ))}
+            </div>
+            <div className="matrix-footer">
+              <span><UserRoundCheck size={14} />{candidates.filter((candidate) => candidate.selected).length} candidates selected</span>
+              <button type="button" onClick={() => setCandidates((current) => current.map((candidate) => ({ ...candidate, selected: true })))}>Select all visible</button>
             </div>
           </section>
-        </div>
-
-        <aside className="space-y-5 lg:sticky lg:top-20">
-          <section className="product-surface overflow-hidden p-6 sm:p-7" aria-labelledby="resume-preview-title">
-            <div className="border-b-2 border-slate-900 pb-5 text-center dark:border-white"><h2 id="resume-preview-title" className="text-2xl font-extrabold tracking-[-0.04em] text-slate-900 dark:text-white">{personalInfo.name || 'Your name'}</h2><p className="mt-1 text-base font-medium text-slate-600 dark:text-slate-300">{personalInfo.title || 'Professional title'}</p><div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">{personalInfo.email && <span>{personalInfo.email}</span>}{personalInfo.phone && <span>{personalInfo.phone}</span>}</div></div>
-            <div className="mt-6"><h3 className="border-b border-slate-200 pb-2 text-sm font-extrabold uppercase tracking-[0.1em] text-slate-800 dark:border-slate-700 dark:text-slate-100">Experience</h3>{experience.some((item) => item.company || item.role || item.description) ? <div className="mt-4 space-y-5">{experience.map((item) => (item.company || item.role || item.description) && <div key={item.id}><div className="flex items-baseline justify-between gap-3"><h4 className="text-sm font-extrabold text-slate-900 dark:text-white">{item.role || 'Role'}</h4><span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{item.company || 'Company'}</span></div><p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{item.description || 'Add a responsibility or achievement to show your evidence.'}</p></div>)}</div> : <p className="mt-4 text-sm leading-6 text-slate-500 dark:text-slate-400">Your experience preview will appear here.</p>}</div>
-          </section>
-
-          <section className="rounded-2xl border border-blue-100 bg-[#eef4ff]/60 p-5 dark:border-blue-900/70 dark:bg-blue-950/30" aria-labelledby="bullet-guidance-title">
-            <div className="flex items-start gap-3"><JobXIconTile icon={PenLine} size="sm" /><div><p className="product-eyebrow">Bullet guidance</p><h2 id="bullet-guidance-title" className="mt-1 text-base font-extrabold text-slate-900 dark:text-white">Make one role more specific</h2></div></div>
-            <p className="mt-4 text-sm font-semibold text-slate-700 dark:text-slate-200">Use this safe template for {selectedExperience.role || 'the selected role'}:</p>
-            <p className="mt-2 rounded-xl border border-blue-100 bg-white/85 p-3 text-sm leading-6 text-slate-700 dark:border-blue-900/70 dark:bg-slate-900/80 dark:text-slate-200">{achievementTemplate}</p>
-            <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">Replace the brackets with facts you can verify. Do not claim a metric you cannot support.</p>
-            <button type="button" onClick={copyTemplate} className="product-focus mt-4 inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-3 py-2 text-xs font-extrabold text-[#0c3e9e] transition-colors hover:bg-blue-50 dark:border-blue-900 dark:bg-slate-900 dark:text-blue-200 dark:hover:bg-blue-950/50"><ClipboardCopy className="h-3.5 w-3.5" />{copied ? <><Check className="h-3.5 w-3.5" /> Copied</> : 'Copy template'}</button>
-          </section>
-        </aside>
+        </section>
       </div>
+
+      <footer className="studio-footer">
+        <span><BriefcaseBusiness size={14} />JobX intelligence workspace</span>
+        <span>Priority signal: <strong>{priority}</strong></span>
+      </footer>
     </div>
   );
 }
