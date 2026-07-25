@@ -69,6 +69,14 @@ export default function App() {
             <Route path="landing" element={<PublicRoute><Landing /></PublicRoute>} />
             <Route path="signin" element={<PublicRoute><SignIn /></PublicRoute>} />
             <Route path="signup" element={<PublicRoute><SignUp /></PublicRoute>} />
+            <Route
+              path="studio"
+              element={(
+                <main className="min-h-screen bg-[#F8FAFC] px-4 py-6 sm:px-6 lg:px-8">
+                  <div className="mx-auto w-full max-w-[1500px]"><ResumeBuilder /></div>
+                </main>
+              )}
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
