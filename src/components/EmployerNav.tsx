@@ -4,7 +4,7 @@ import { SpotlightNavbar } from './ui/SpotlightNavbar';
 const employerNavLinks = [
   { name: 'Dashboard', path: '/employer' },
   { name: 'Post Job', path: '/post-job' },
-  { name: 'Tools', path: '/employer/tools' },
+  { name: 'AI Tools', path: '/employer/ai-tools' },
   { name: 'Settings', path: '/employer/settings' },
 ];
 
