@@ -312,7 +312,6 @@ export default function EmployerDashboard() {
 const EMPLOYER_SHORTCUTS = [
   { label: 'My company', href: '/employer/settings', icon: Landmark },
   { label: 'My jobs', href: '/my-posts', icon: Briefcase },
-  { label: 'Departments', href: '/employer/departments', icon: Users },
   { label: 'Candidate folders', href: '/employer/candidates', icon: Folder },
   { label: 'Messages', href: '/messages', icon: Mail },
   { label: 'Interview center', href: '/employer/interviews', icon: Video },

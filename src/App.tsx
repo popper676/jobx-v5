@@ -29,7 +29,6 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const ProofHub = lazy(() => import('./pages/ProofHub'));
 const CompanyProfile = lazy(() => import('./pages/CompanyProfile'));
 const EmployerTools = lazy(() => import('./pages/EmployerTools'));
-const EmployerDepartments = lazy(() => import('./pages/EmployerDepartments'));
 const EmployerCandidates = lazy(() => import('./pages/EmployerCandidates'));
 const EmployerCandidateProfile = lazy(() => import('./pages/EmployerCandidateProfile'));
 const EmployerOperations = lazy(() => import('./pages/EmployerOperations'));
@@ -64,7 +63,6 @@ export default function App() {
               <Route path="employer" element={<EmployerDashboard />} />
               <Route path="employer/settings" element={<EmployerSettingsPage />} />
               <Route path="employer/tools" element={<EmployerTools />} />
-              <Route path="employer/departments" element={<EmployerDepartments />} />
               <Route path="employer/candidates" element={<EmployerCandidates />} />
               <Route path="employer/candidates/:id" element={<EmployerCandidateProfile />} />
               <Route path="employer/rates" element={<EmployerOperations />} />

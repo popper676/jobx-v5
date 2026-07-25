@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 
 const tools = [
   { icon: <BriefcaseBusiness />, title: 'My jobs', detail: 'Manage active, draft, and closed roles', href: '/my-posts' },
-  { icon: <Users />, title: 'Departments', detail: 'Open positions and completed hires by team', href: '/employer/departments' },
   { icon: <Folder />, title: 'Candidate folders', detail: 'Search the applicant database by role', href: '/employer/candidates' },
   { icon: <Mail />, title: 'Messages', detail: 'Role-aware candidate conversations', href: '/messages' },
   { icon: <Video />, title: 'Interview center', detail: 'Accepted applicants, scheduling, and role conversations', href: '/employer/interviews' },
