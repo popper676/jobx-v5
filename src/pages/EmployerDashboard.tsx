@@ -105,8 +105,18 @@ export default function EmployerDashboard() {
       <header className="border-b border-slate-200/80 bg-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-6 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
           <div>
+            <Link to="/employer/settings" className="group mb-5 inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2.5 pr-4 shadow-sm transition hover:border-[#173b67] hover:shadow-md">
+              <span className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-[#12213a] text-sm font-black tracking-wide text-white shadow-sm">
+                TC
+                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-[#b7ff3c] text-[#12213a]"><ShieldCheck className="h-3 w-3" /></span>
+              </span>
+              <span>
+                <span className="flex items-center gap-2"><strong className="text-base font-black text-slate-950">TechCorp Inc.</strong><span className="rounded-full bg-lime-50 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-wide text-green-700">Verified</span></span>
+                <span className="mt-0.5 block text-xs font-semibold text-slate-500">Software & Technology · Remote-first</span>
+              </span>
+            </Link>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#014BAA]">
-              Recruiting workspace
+              TechCorp recruiting workspace
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Hiring overview
