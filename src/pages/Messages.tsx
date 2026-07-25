@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, MoreVertical, Phone, Video, Send, Image as ImageIcon, Smile, Paperclip } from 'lucide-react';
+import { ArrowLeft, Search, MoreVertical, Phone, Video, Send, Image as ImageIcon, Smile, Paperclip } from 'lucide-react';
 import { useStore } from '../store/StoreProvider';
+import { Link } from 'react-router-dom';
+
+const CANDIDATE_ROLES: Record<string, string> = {
+  'Sarah Chen': 'Senior React Engineer',
+  'Marcus Rodriguez': 'Product Designer',
+  'Jenna Miles': 'UX Researcher',
+};
 
 export default function Messages() {
   const store = useStore();
@@ -27,7 +34,9 @@ export default function Messages() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex h-[calc(100vh-8rem)]">
+    <div>
+      <Link to="/employer" className="product-button-secondary mb-4 inline-flex"><ArrowLeft className="h-4 w-4" />Back to dashboard</Link>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex h-[calc(100vh-11rem)]">
       <div className="w-full md:w-80 border-r border-gray-100 flex flex-col flex-shrink-0">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -55,7 +64,7 @@ export default function Messages() {
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search messages"
+            placeholder="Search candidate or role"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-[#F8F3F0] border border-transparent rounded-lg text-sm focus:outline-none focus:bg-white focus:border-primary/30 focus:ring-2 focus:ring-primary/10 transition-all"
@@ -90,10 +99,9 @@ export default function Messages() {
                     {chat.time}
                   </span>
                 </div>
+                <p className="mb-1 truncate text-[0.68rem] font-bold text-[#173b67]">{chat.role || CANDIDATE_ROLES[chat.name] || 'JobX candidate'}</p>
                 <div className="flex justify-between items-center">
-                  <p className={`text-sm truncate ${chat.unread && store.activeChat?.id !== chat.id ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
-                    {chat.lastMessage}
-                  </p>
+                  <p className={`truncate text-xs ${chat.unread && store.activeChat?.id !== chat.id ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>{chat.lastMessage}</p>
                   {chat.unread > 0 && store.activeChat?.id !== chat.id && (
                     <span className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-2">
                       {chat.unread}
@@ -132,7 +140,7 @@ export default function Messages() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{store.activeChat.name}</h3>
-                    <p className="text-xs text-gray-500">{store.activeChat.online ? 'Online' : 'Offline'}</p>
+                    <p className="text-xs text-gray-500">{store.activeChat.role || CANDIDATE_ROLES[store.activeChat.name] || 'JobX candidate'} · {store.activeChat.online ? 'Online' : 'Offline'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-gray-500">
@@ -226,6 +234,6 @@ export default function Messages() {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </div></div>
   );
 }

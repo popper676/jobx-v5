@@ -4,7 +4,7 @@ import { Briefcase, Eye, EyeOff, CheckCircle, Mail, User, ArrowRight } from 'luc
 import { motion } from 'motion/react';
 import { useStore } from '../store/StoreProvider';
 import UserAvatar from '../components/UserAvatar';
-import JobXCareerSignal from '../components/JobXCareerSignal';
+import BrandLogo from '../components/BrandLogo';
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -55,9 +55,9 @@ export default function SignUp() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
-              className="w-16 h-16 rounded-full gradient-primary mx-auto flex items-center justify-center shadow-lg shadow-blue-500/25 mb-4"
+              className="mx-auto mb-4 flex items-center justify-center"
             >
-              <JobXCareerSignal className="w-9 h-9 text-white" />
+              <BrandLogo className="h-16 w-16" showWordmark={false} />
             </motion.div>
             <h2 className="text-2xl font-extrabold text-gray-900">Account Created!</h2>
             <p className="text-sm text-gray-500 mt-1">Your Jobx journey starts now</p>

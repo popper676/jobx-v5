@@ -12,6 +12,7 @@ import { useStore } from '../store/StoreProvider';
 import UserAvatar from '../components/UserAvatar';
 import JobIntelligencePanel from '../components/JobIntelligencePanel';
 import JobXCareerSignal from '../components/JobXCareerSignal';
+import EmployerProfileLink from '../components/EmployerProfileLink';
 import {
   describeCareerSearchIntent,
   getJobIntelligence,
@@ -203,9 +204,9 @@ const JobListCard = ({
 
         {/* Title + company */}
         <div className="flex items-start gap-3">
-          <div className={`w-11 h-11 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0 ${job.logoColor}`}>
+          <EmployerProfileLink job={job}><div className={`w-11 h-11 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0 ${job.logoColor}`}>
             {job.logoInitials}
-          </div>
+          </div></EmployerProfileLink>
           <div className="flex-1 min-w-0">
             <h3 className={`font-semibold text-[15px] mb-0.5 truncate ${isSelected ? 'text-[#014BAA]' : 'text-gray-900'}`}>
               {job.title}
@@ -709,11 +710,11 @@ export default function Search() {
                 >
                   <div className="absolute top-0 left-0 right-0 h-1 gradient-primary" />
                   <div className="flex items-start gap-4 mb-5">
-                    <div
+                    <EmployerProfileLink job={selectedJob}><div
                       className={`w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md shrink-0 ${selectedJob.logoColor}`}
                     >
                       {selectedJob.logoInitials}
-                    </div>
+                    </div></EmployerProfileLink>
                     <div className="flex-1">
                       <h2 className="text-2xl font-extrabold text-gray-900 mb-1">{selectedJob.title}</h2>
                       <div className="flex items-center gap-2 text-gray-700 mb-0.5">

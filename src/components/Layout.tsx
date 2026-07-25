@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Briefcase, LayoutDashboard, FolderGit2, Settings, Bell, MessageSquare, LogOut, User, X, FileText, RefreshCw, Compass } from 'lucide-react';
+import { Search, Briefcase, LayoutDashboard, FolderGit2, Settings, Bell, MessageSquare, LogOut, User, X, FileText, RefreshCw, Bot, Target } from 'lucide-react';
 import { useStore } from '../store/StoreProvider';
 import { useRole } from '../context/RoleContext';
 import { MOCK_JOBS } from '../data';
@@ -11,6 +11,7 @@ import EmployerNav from './EmployerNav';
 import RoleTransitionScreen from './RoleTransitionScreen';
 import { SpotlightNavbar } from './ui/SpotlightNavbar';
 import { NotificationList } from './ui/NotificationList';
+import BrandLogo from './BrandLogo';
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -73,7 +74,9 @@ export default function Layout() {
     { name: 'Workspace', path: '/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: 'Jobs', path: '/jobs', icon: <Briefcase className="w-5 h-5" /> },
     { name: 'Tracker', path: '/applications', icon: <FileText className="w-5 h-5" /> },
+    { name: 'Missions', path: '/missions', icon: <Target className="w-5 h-5" /> },
     { name: 'Projects', path: '/projects', icon: <FolderGit2 className="w-5 h-5" /> },
+    { name: 'AI Assistant', path: '/career-coach', icon: <Bot className="w-5 h-5" /> },
     { name: 'Settings', path: '/settings', icon: <Settings className="w-5 h-5" /> },
   ];
 
@@ -84,10 +87,7 @@ export default function Layout() {
           <div className="flex justify-between h-16">
             <div className="flex items-center gap-8">
               <Link to={isEmployer ? '/employer' : '/dashboard'} className="flex items-center gap-2 group">
-                <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center shadow-sm shadow-blue-500/20 group-hover:shadow-md group-hover:shadow-blue-500/30 transition-all">
-                  <Briefcase className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-extrabold tracking-[-0.045em] text-slate-900 dark:text-white">JobX</span>
+                <BrandLogo className="h-9 w-9 transition-transform group-hover:-translate-y-0.5" />
               </Link>
               
               <div className="hidden md:block relative" ref={searchRef}>
@@ -233,14 +233,6 @@ export default function Layout() {
                         <User className="w-4 h-4 text-gray-400" />
                         Profile
                       </Link>
-                      {!isEmployer && <Link
-                        to="/career-coach"
-                        onClick={() => setShowUserMenu(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50/50 transition-colors text-sm text-gray-700"
-                      >
-                        <Compass className="w-4 h-4 text-gray-400" />
-                        Career Coach
-                      </Link>}
                       <button
                         onClick={handleRoleSwitch}
                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50/50 transition-colors text-sm text-gray-700 w-full"

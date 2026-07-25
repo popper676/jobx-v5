@@ -22,7 +22,7 @@ import './index.css';
       id: 'demo-001',
       name: 'Alex Rivera',
       email: demoEmail,
-      avatar: '',
+      avatar: '/assets/alex-rivera-ai-profile.png',
       title: 'Full Stack Developer',
       bio: 'Passionate developer building the future of work.',
       location: 'San Francisco, CA',

@@ -208,6 +208,17 @@ export default function EmployerSettingsPage() {
     phone: '+1 (415) 555-0123',
     linkedin: 'https://linkedin.com/company/techcorp',
     twitter: 'https://twitter.com/techcorp',
+    careersPage: 'https://techcorp.com/careers',
+    headquarters: 'San Francisco, CA',
+    workModel: 'Remote-first',
+    hiringRegions: 'United States, Canada, Malaysia, Singapore',
+    mission: 'Make reliable cloud infrastructure accessible to every product team.',
+    culture: 'High ownership, thoughtful collaboration, continuous learning, and sustainable delivery.',
+    benefits: 'Flexible work, learning budget, health coverage, home-office allowance, paid volunteering',
+    technologies: 'React, TypeScript, Go, Kubernetes, AWS, PostgreSQL',
+    responseCommitment: '5 business days',
+    contactName: 'Alex Rivera',
+    contactTitle: 'Head of Talent',
   });
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -300,7 +311,27 @@ export default function EmployerSettingsPage() {
   /* ---------- Renderers ---------- */
   const renderCompanyTab = () => (
     <>
-      <SectionHeader title="Company Profile" desc="Manage your public company information and branding." />
+      <SectionHeader title="Company Profile" desc="Build a complete, trusted employer profile candidates can evaluate before they apply." />
+
+      <div className="mb-6 grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
+        <div className="overflow-hidden rounded-2xl bg-[#12213a] p-6 text-white shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/20">
+                {logoPreview ? <img src={logoPreview} alt="" className="h-full w-full object-cover" /> : <Building2 className="h-7 w-7 text-[#b7ff3c]" />}
+              </div>
+              <div><p className="text-xs font-black uppercase tracking-[0.16em] text-[#b7ff3c]">Public profile preview</p><h2 className="mt-1 text-2xl font-black">{company.name}</h2><p className="mt-1 text-sm text-slate-300">{company.tagline}</p></div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-black text-[#b7ff3c]"><BadgeCheck className="h-4 w-4" />Verified employer</span>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-2 text-xs font-bold text-slate-200"><span className="rounded-full bg-white/10 px-3 py-1.5">{company.industry}</span><span className="rounded-full bg-white/10 px-3 py-1.5">{company.size}</span><span className="rounded-full bg-white/10 px-3 py-1.5">{company.workModel}</span><span className="rounded-full bg-white/10 px-3 py-1.5">{company.location}</span></div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Profile readiness</p><strong className="mt-2 block text-4xl font-black text-[#12213a]">92%</strong></div><div className="flex h-16 w-16 items-center justify-center rounded-full border-[7px] border-[#b7ff3c] text-sm font-black text-[#173b67]">A+</div></div>
+          <div className="mt-5 h-2 rounded-full bg-slate-100"><div className="h-full w-[92%] rounded-full bg-[#173b67]" /></div>
+          <p className="mt-3 text-xs leading-5 text-slate-500">Add workplace photos and a diversity statement to reach 100%.</p>
+        </div>
+      </div>
 
       <Card title="Branding" index={0}>
         <div className="flex items-center gap-5 mb-6">
@@ -398,7 +429,43 @@ export default function EmployerSettingsPage() {
             onChange={(e) => setCompany({ ...company, twitter: e.target.value })}
             icon={<ExternalLink className="w-4 h-4 text-gray-400" />}
           />
+          <Input
+            label="Careers Page"
+            value={company.careersPage}
+            onChange={(e) => setCompany({ ...company, careersPage: e.target.value })}
+            icon={<Globe className="w-4 h-4 text-gray-400" />}
+          />
         </div>
+      </Card>
+
+      <Card title="Hiring Presence" index={3}>
+        <p className="-mt-2 mb-5 text-sm text-slate-500">Explain where and how your teams work so applicants can assess practical fit before applying.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+          <Input label="Headquarters" value={company.headquarters} onChange={(e) => setCompany({ ...company, headquarters: e.target.value })} icon={<MapPin className="w-4 h-4 text-gray-400" />} />
+          <Select label="Work Model" value={company.workModel} options={['On-site', 'Hybrid', 'Remote-first', 'Fully remote']} onChange={(e) => setCompany({ ...company, workModel: e.target.value })} />
+          <Input label="Hiring Regions" value={company.hiringRegions} onChange={(e) => setCompany({ ...company, hiringRegions: e.target.value })} icon={<Globe className="w-4 h-4 text-gray-400" />} />
+          <Select label="Candidate Response Commitment" value={company.responseCommitment} options={['2 business days', '3 business days', '5 business days', '7 business days']} onChange={(e) => setCompany({ ...company, responseCommitment: e.target.value })} />
+          <Input label="Primary Hiring Contact" value={company.contactName} onChange={(e) => setCompany({ ...company, contactName: e.target.value })} />
+          <Input label="Contact Role" value={company.contactTitle} onChange={(e) => setCompany({ ...company, contactTitle: e.target.value })} />
+        </div>
+      </Card>
+
+      <Card title="Culture, Mission & Benefits" index={4}>
+        <div className="grid gap-1">
+          <TextArea label="Company Mission" rows={3} value={company.mission} onChange={(e) => setCompany({ ...company, mission: e.target.value })} />
+          <TextArea label="Culture & Ways of Working" rows={3} value={company.culture} onChange={(e) => setCompany({ ...company, culture: e.target.value })} />
+          <TextArea label="Benefits & Employee Support" rows={3} value={company.benefits} onChange={(e) => setCompany({ ...company, benefits: e.target.value })} />
+          <Input label="Core Technologies & Skills" value={company.technologies} onChange={(e) => setCompany({ ...company, technologies: e.target.value })} />
+        </div>
+      </Card>
+
+      <Card title="Employer Trust & Verification" index={5}>
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4"><BadgeCheck className="h-5 w-5 text-emerald-700" /><strong className="mt-3 block text-sm text-slate-900">Business verified</strong><p className="mt-1 text-xs leading-5 text-slate-500">Company identity and domain confirmed.</p></div>
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4"><TrendingUp className="h-5 w-5 text-[#173b67]" /><strong className="mt-3 block text-sm text-slate-900">96% response rate</strong><p className="mt-1 text-xs leading-5 text-slate-500">Candidate updates sent within your promise.</p></div>
+          <div className="rounded-xl border border-lime-200 bg-lime-50 p-4"><Shield className="h-5 w-5 text-green-700" /><strong className="mt-3 block text-sm text-slate-900">14 verified hires</strong><p className="mt-1 text-xs leading-5 text-slate-500">Completed JobX hiring outcomes.</p></div>
+        </div>
+        <div className="mt-5 rounded-xl border border-slate-200"><Toggle label="Public trust signals" desc="Display verification, response performance, and active hiring confirmation." checked={true} onChange={() => undefined} /></div>
       </Card>
 
       <div className="flex justify-end">

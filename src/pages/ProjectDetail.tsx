@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Heart, MessageSquare, Share2, Bookmark, Github, ExternalLink, 
-  Users, UserPlus, ChevronLeft, Send, X, Terminal, Monitor, PenTool, CheckCircle
+  Users, UserPlus, ChevronLeft, Send, X, Terminal, Monitor, PenTool, CheckCircle, Eye
 } from 'lucide-react';
 import { useStore } from '../store/StoreProvider';
 import UserAvatar from '../components/UserAvatar';
@@ -18,6 +18,7 @@ type ProjectDetailRecord = {
   author: { name: string; title: string; avatar: string; isFollowing: boolean };
   repositoryUrl?: string;
   demoUrl?: string;
+  metrics?: { likes: number; comments: number; visitors?: number; collaborators?: number };
 };
 
 const PROJECT_DETAILS = {
@@ -70,8 +71,13 @@ export default function ProjectDetail() {
       },
       repositoryUrl: submittedProject.repositoryUrl,
       demoUrl: submittedProject.demoUrl,
+      metrics: submittedProject.metrics,
     }
     : PROJECT_DETAILS[id as keyof typeof PROJECT_DETAILS] as ProjectDetailRecord | undefined;
+
+  useEffect(() => {
+    if (id) projectService.recordVisit(id);
+  }, [id]);
 
   if (!selectedProject) {
     return <div className="max-w-5xl mx-auto w-full py-16 text-center"><h1 className="text-2xl font-extrabold text-gray-900">Project not found</h1><p className="mt-2 text-sm text-gray-500">This project may have been removed or is not available in this browser.</p><Link to="/projects" className="mt-5 inline-flex text-sm font-bold text-[#014BAA] hover:underline">Back to Projects</Link></div>;
@@ -100,6 +106,7 @@ export default function ProjectDetail() {
     e.preventDefault();
     setRequestStatus('pending');
     setShowCollabModal(false);
+    if (id) projectService.recordCollaboration(id, store.user.id);
   };
 
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
@@ -237,7 +244,7 @@ export default function ProjectDetail() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <Heart className="w-4 h-4" /> Like (89)
+                <Heart className="w-4 h-4" /> Like ({project.metrics?.likes || 89})
               </motion.button>
               <motion.button
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[#F8F3F0] hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition-colors border border-gray-200"
@@ -247,6 +254,7 @@ export default function ProjectDetail() {
                 <MessageSquare className="w-4 h-4" /> Comment
               </motion.button>
             </div>
+            <div className="flex items-center gap-4 text-sm font-semibold text-slate-500"><span className="inline-flex items-center gap-1.5"><Eye className="h-4 w-4" />{(project.metrics?.visitors || 0) + (id ? projectService.getEngagement(id).visitors : 0)} visitors</span><span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4" />{(project.metrics?.collaborators || 0) + (id ? projectService.getEngagement(id).collaborators : 0)} collaborators</span></div>
             <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
               <motion.button
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-gray-600 hover:bg-[#F8F3F0] rounded-lg text-sm font-medium transition-colors"

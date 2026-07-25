@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Briefcase, Eye, EyeOff, CheckCircle, User, Mail, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, User, Mail, ArrowRight } from 'lucide-react';
+import BrandLogo from '../components/BrandLogo';
 import { motion } from 'motion/react';
 import { useStore } from '../store/StoreProvider';
 import UserAvatar from '../components/UserAvatar';
@@ -121,9 +122,9 @@ export default function SignIn() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-blue-500/25"
+              className="flex items-center justify-center"
             >
-              <Briefcase className="w-8 h-8 text-white" />
+              <BrandLogo className="h-14 w-14" showWordmark={false} />
             </motion.div>
           </div>
           <div className="title_container">

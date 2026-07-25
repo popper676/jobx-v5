@@ -8,6 +8,7 @@ import { useStore } from '../store/StoreProvider';
 import JobIntelligencePanel from '../components/JobIntelligencePanel';
 import JobTrustSignals from '../components/JobTrustSignals';
 import { getJobTrustProfile } from '../services/trustService';
+import EmployerProfileLink from '../components/EmployerProfileLink';
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -37,7 +38,7 @@ export default function JobDetail() {
 
   return (
     <div className="premium-page mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link to="/search" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#014BAA] mb-6 transition-colors group">
+      <Link to="/jobs" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-[#014BAA] mb-6 transition-colors group">
         <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-0.5 transition-transform" /> Back to jobs
       </Link>
 
@@ -71,7 +72,7 @@ export default function JobDetail() {
           <div className="pointer-events-none absolute -right-24 -top-28 h-64 w-64 rounded-full bg-indigo-200/35 blur-3xl" />
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
             <div className="relative flex items-start gap-5">
-              <motion.div
+              <EmployerProfileLink job={job}><motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
@@ -79,7 +80,7 @@ export default function JobDetail() {
                 className={`w-16 h-16 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shrink-0 ${job.logoColor}`}
               >
                 {job.logoInitials}
-              </motion.div>
+              </motion.div></EmployerProfileLink>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                   {job.title}

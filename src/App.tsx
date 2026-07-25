@@ -26,6 +26,14 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Settings = lazy(() => import('./pages/Settings'));
 const Messages = lazy(() => import('./pages/Messages'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const ProofHub = lazy(() => import('./pages/ProofHub'));
+const CompanyProfile = lazy(() => import('./pages/CompanyProfile'));
+const EmployerTools = lazy(() => import('./pages/EmployerTools'));
+const EmployerDepartments = lazy(() => import('./pages/EmployerDepartments'));
+const EmployerCandidates = lazy(() => import('./pages/EmployerCandidates'));
+const EmployerCandidateProfile = lazy(() => import('./pages/EmployerCandidateProfile'));
+const EmployerOperations = lazy(() => import('./pages/EmployerOperations'));
+const EmployerInterviewCenter = lazy(() => import('./pages/EmployerInterviewCenter'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const store = useStore();
@@ -50,10 +58,19 @@ export default function App() {
               <Route path="jobs" element={<Jobs />} />
               <Route path="search" element={<Search />} />
               <Route path="jobs/:id" element={<JobDetail />} />
+              <Route path="companies/:companyName" element={<CompanyProfile />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="applications" element={<ApplicationsPage />} />
               <Route path="employer" element={<EmployerDashboard />} />
               <Route path="employer/settings" element={<EmployerSettingsPage />} />
+              <Route path="employer/tools" element={<EmployerTools />} />
+              <Route path="employer/departments" element={<EmployerDepartments />} />
+              <Route path="employer/candidates" element={<EmployerCandidates />} />
+              <Route path="employer/candidates/:id" element={<EmployerCandidateProfile />} />
+              <Route path="employer/rates" element={<EmployerOperations />} />
+              <Route path="employer/analytics" element={<EmployerOperations />} />
+              <Route path="employer/challenges" element={<EmployerOperations />} />
+              <Route path="employer/interviews" element={<EmployerInterviewCenter />} />
               <Route path="my-posts" element={<MyPostsPage />} />
               <Route path="post-job" element={<PostJobPage />} />
               <Route path="applicants" element={<ViewApplicantsPage />} />
@@ -61,6 +78,8 @@ export default function App() {
               <Route path="career-coach" element={<CareerCoach />} />
               <Route path="projects" element={<Projects />} />
               <Route path="projects/:id" element={<ProjectDetail />} />
+              <Route path="missions" element={<ProofHub />} />
+              <Route path="tests" element={<ProofHub />} />
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="messages" element={<Messages />} />
@@ -72,9 +91,11 @@ export default function App() {
             <Route
               path="studio"
               element={(
-                <main className="min-h-screen bg-[#F8FAFC] px-4 py-6 sm:px-6 lg:px-8">
-                  <div className="mx-auto w-full max-w-[1500px]"><ResumeBuilder /></div>
-                </main>
+                <ProtectedRoute>
+                  <main className="min-h-screen bg-[#F8FAFC] px-4 py-6 sm:px-6 lg:px-8">
+                    <div className="mx-auto w-full max-w-[1500px]"><ResumeBuilder /></div>
+                  </main>
+                </ProtectedRoute>
               )}
             />
             <Route path="*" element={<NotFound />} />

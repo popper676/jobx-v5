@@ -1,12 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import {
   ArrowDown,
+  ArrowLeft,
   ArrowUp,
-  BarChart3,
+  BadgeCheck,
   BriefcaseBusiness,
   Check,
-  ChevronDown,
-  CircleGauge,
   Download,
   GripVertical,
   Mail,
@@ -18,30 +17,20 @@ import {
   Save,
   Sparkles,
   Trash2,
-  UserRoundCheck,
   WandSparkles,
 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { db } from '../services/db';
 import { analyzeResume, type ResumeExperience, type ResumePersonal } from '../services/resumeIntelligenceService';
+import { getCareerPassport } from '../services/careerIntelligenceService';
 import { useStore } from '../store/StoreProvider';
 
 type Priority = 'Low' | 'Medium' | 'High' | 'Critical';
-type CandidateStatus = 'Shortlisted' | 'Under Review' | 'Scheduled' | 'Interviewed';
 
 type Milestone = {
   id: number;
   label: string;
   detail: string;
-};
-
-type Candidate = {
-  id: number;
-  name: string;
-  initials: string;
-  role: string;
-  status: CandidateStatus;
-  score: number;
-  selected: boolean;
 };
 
 const DEFAULT_PERSONAL: ResumePersonal = {
@@ -72,20 +61,6 @@ const DEFAULT_MILESTONES: Milestone[] = [
   { id: 3, label: 'ATS optimized', detail: 'Keywords and role alignment' },
 ];
 
-const DEFAULT_CANDIDATES: Candidate[] = [
-  { id: 1, name: 'Alex Rivera', initials: 'AR', role: 'Product Design', status: 'Shortlisted', score: 94, selected: true },
-  { id: 2, name: 'Maya Chen', initials: 'MC', role: 'Design Systems', status: 'Under Review', score: 89, selected: false },
-  { id: 3, name: 'Jon Bell', initials: 'JB', role: 'Product Strategy', status: 'Scheduled', score: 86, selected: false },
-  { id: 4, name: 'Nina Shah', initials: 'NS', role: 'UX Research', status: 'Interviewed', score: 82, selected: false },
-];
-
-const statusStyles: Record<CandidateStatus, string> = {
-  Shortlisted: 'status-shortlisted',
-  'Under Review': 'status-review',
-  Scheduled: 'status-scheduled',
-  Interviewed: 'status-interviewed',
-};
-
 function getStoredExperience(): ResumeExperience[] {
   const saved = db.get<ResumeExperience[]>('resume_experience', DEFAULT_EXPERIENCE);
   return Array.isArray(saved) && saved.length ? saved : DEFAULT_EXPERIENCE;
@@ -93,29 +68,32 @@ function getStoredExperience(): ResumeExperience[] {
 
 export default function ResumeBuilder() {
   const store = useStore();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const openedFromProfile = searchParams.get('from') === 'profile';
   const [personal, setPersonal] = useState<ResumePersonal>(() => {
     const saved = db.get<Partial<ResumePersonal> | null>('resume_personal', null);
     return {
-      name: saved?.name || store.user.name || DEFAULT_PERSONAL.name,
-      title: saved?.title || store.user.title || DEFAULT_PERSONAL.title,
-      email: saved?.email || store.user.email || DEFAULT_PERSONAL.email,
+      name: (openedFromProfile ? store.user.name : saved?.name) || store.user.name || DEFAULT_PERSONAL.name,
+      title: (openedFromProfile ? store.user.title : saved?.title) || store.user.title || DEFAULT_PERSONAL.title,
+      email: (openedFromProfile ? store.user.email : saved?.email) || store.user.email || DEFAULT_PERSONAL.email,
       phone: saved?.phone || DEFAULT_PERSONAL.phone,
     };
   });
   const [location, setLocation] = useState(store.user.location || 'San Francisco, CA');
-  const [summary, setSummary] = useState('Product designer translating complex systems into calm, high-conviction experiences. I pair research depth with strong visual craft to ship products that perform.');
-  const [skills, setSkills] = useState(['Product strategy', 'Design systems', 'Figma', 'User research']);
-  const [experiences, setExperiences] = useState<ResumeExperience[]>(getStoredExperience);
+  const [summary, setSummary] = useState(store.user.bio || 'Describe your professional direction, strengths, and the outcomes you create.');
+  const [skills, setSkills] = useState(store.user.skills.length ? store.user.skills.map(({ skill }) => skill) : ['Product strategy', 'Design systems', 'Figma', 'User research']);
+  const [experiences, setExperiences] = useState<ResumeExperience[]>(() => openedFromProfile && store.user.experience.length
+    ? store.user.experience.map((item, index) => ({ id: index + 1, company: item.company, role: item.role, description: item.description }))
+    : getStoredExperience());
   const [editingId, setEditingId] = useState<number | null>(1);
   const [milestones, setMilestones] = useState(DEFAULT_MILESTONES);
   const [priority, setPriority] = useState<Priority>('High');
-  const [candidates, setCandidates] = useState(DEFAULT_CANDIDATES);
-  const [filter, setFilter] = useState<'All' | CandidateStatus>('All');
   const [notice, setNotice] = useState('All changes synced');
 
   const analysis = useMemo(() => analyzeResume(personal, experiences), [personal, experiences]);
+  const passport = getCareerPassport(store.user);
   const profileScore = Math.max(82, analysis.score);
-  const filteredCandidates = filter === 'All' ? candidates : candidates.filter((candidate) => candidate.status === filter);
 
   const updatePersonal = (field: keyof ResumePersonal, value: string) => {
     const next = { ...personal, [field]: value };
@@ -187,55 +165,64 @@ export default function ResumeBuilder() {
   };
 
   const optimizeResume = () => {
-    setNotice('ATS cognition optimized · 12 role signals aligned');
+    setNotice('Profile improved · 12 role signals aligned');
   };
 
   const syncCoordinates = () => {
     db.set('resume_personal', personal);
     db.set('resume_experience', experiences);
-    setNotice(`Coordinates synced · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
-  };
-
-  const toggleCandidate = (id: number) => {
-    setCandidates((current) => current.map((candidate) => candidate.id === id ? { ...candidate, selected: !candidate.selected } : candidate));
-  };
-
-  const cycleCandidateStatus = (id: number) => {
-    const order: CandidateStatus[] = ['Under Review', 'Shortlisted', 'Scheduled', 'Interviewed'];
-    setCandidates((current) => current.map((candidate) => {
-      if (candidate.id !== id) return candidate;
-      const index = order.indexOf(candidate.status);
-      return { ...candidate, status: order[(index + 1) % order.length] };
-    }));
-    setNotice('Candidate evaluation updated');
+    store.updateUser({
+      name: personal.name,
+      title: personal.title,
+      email: personal.email,
+      location,
+      bio: summary,
+      skills: skills.map((skill) => ({
+        skill,
+        endorsements: store.user.skills.find((current) => current.skill.toLowerCase() === skill.toLowerCase())?.endorsements || 0,
+      })),
+      experience: experiences.map((item) => {
+        const existing = store.user.experience.find((experience) => experience.role === item.role && experience.company === item.company);
+        return {
+          role: item.role,
+          company: item.company,
+          description: item.description,
+          duration: existing?.duration || '',
+          period: existing?.period || '',
+        };
+      }),
+    });
+    setNotice(`Profile saved · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+    if (openedFromProfile) navigate('/profile');
   };
 
   return (
     <div className="resume-studio">
       <header className="resume-studio__header">
         <div>
-          <div className="resume-studio__eyebrow"><span>Talent intelligence</span><span className="resume-studio__eyebrow-dot" />Live workspace</div>
-          <h1>Candidate cognition studio</h1>
-          <p>Shape candidate evidence and calibrate the hiring signal in one continuous workspace.</p>
+          {openedFromProfile && <button type="button" className="studio-back-link" onClick={() => navigate('/profile')}><ArrowLeft size={15} />Back to profile</button>}
+          <div className="resume-studio__eyebrow"><span>Your profile</span><span className="resume-studio__eyebrow-dot" />Career Passport</div>
+          <h1>Edit your profile</h1>
+          <p>Keep your professional details, experience, skills, and Career Passport up to date.</p>
         </div>
         <div className="resume-studio__actions">
           <span className="sync-note"><Check size={13} />{notice}</span>
           <button className="studio-button studio-button--quiet" type="button" onClick={exportResume}><Download size={15} />Export</button>
-          <button className="studio-button studio-button--primary" type="button" onClick={syncCoordinates}><Sparkles size={15} />Sync coordinates</button>
+          <button className="studio-button studio-button--primary" type="button" onClick={syncCoordinates}><Save size={15} />Save changes</button>
         </div>
       </header>
 
       <div className="studio-metrics" aria-label="Workspace metrics">
         <div><span>Profile strength</span><strong>{profileScore}%</strong><small>+8 this week</small></div>
-        <div><span>ATS signal</span><strong>91</strong><small>Top 7% match</small></div>
-        <div><span>Pipeline position</span><strong>04</strong><small>Active reviews</small></div>
-        <div><span>Last calibrated</span><strong>Today</strong><small>09:42 AM</small></div>
+        <div><span>Skills added</span><strong>{skills.length}</strong><small>Career evidence</small></div>
+        <div><span>Experience</span><strong>{experiences.length}</strong><small>Profile entries</small></div>
+        <div><span>Proof points</span><strong>{passport.proofPoints}</strong><small>Career Passport</small></div>
       </div>
 
       <div className="studio-grid">
         <section className="studio-control-panel" aria-label="Candidate customization controls">
           <div className="studio-section-heading">
-            <div><span>01 / Identity</span><h2>Candidate coordinates</h2></div>
+            <div><span>01 / Profile</span><h2>Personal information</h2></div>
             <button className="icon-button" type="button" aria-label="More candidate options"><MoreHorizontal size={18} /></button>
           </div>
 
@@ -250,7 +237,7 @@ export default function ResumeBuilder() {
 
           <div className="studio-divider" />
           <div className="studio-section-heading">
-            <div><span>02 / Workflow</span><h2>Milestone pipeline</h2></div>
+            <div><span>02 / Readiness</span><h2>Profile checklist</h2></div>
             <button className="mini-action" type="button" onClick={addMilestone}><Plus size={14} />Add stage</button>
           </div>
           <div className="milestone-list">
@@ -269,7 +256,7 @@ export default function ResumeBuilder() {
           </div>
 
           <div className="priority-block">
-            <div><span>SYSTEM URGENCY</span><small>Controls review velocity and alert cadence.</small></div>
+            <div><span>JOB SEARCH PRIORITY</span><small>Choose how actively you are looking for opportunities.</small></div>
             <div className="priority-options">
               {(['Low', 'Medium', 'High', 'Critical'] as Priority[]).map((item) => (
                 <button type="button" key={item} className={priority === item ? `is-active priority-${item.toLowerCase()}` : ''} onClick={() => setPriority(item)}>
@@ -281,7 +268,7 @@ export default function ResumeBuilder() {
 
           <div className="studio-divider" />
           <div className="studio-section-heading">
-            <div><span>03 / Evidence</span><h2>Experience ledger</h2></div>
+            <div><span>03 / Experience</span><h2>Work and project experience</h2></div>
             <button className="mini-action" type="button" onClick={addExperience}><Plus size={14} />Add item</button>
           </div>
           <div className="experience-ledger">
@@ -319,8 +306,8 @@ export default function ResumeBuilder() {
 
         <section className="studio-preview-panel" aria-label="Live candidate preview and analytics">
           <div className="preview-toolbar">
-            <div><span className="live-indicator"><i />Live document</span><strong>Candidate profile / A4</strong></div>
-            <button className="optimize-button" type="button" onClick={optimizeResume}><WandSparkles size={15} />Optimize ATS cognition</button>
+            <div><span className="live-indicator"><i />Live preview</span><strong>Your JobX profile</strong></div>
+            <button className="optimize-button" type="button" onClick={optimizeResume}><WandSparkles size={15} />Improve profile</button>
           </div>
 
           <article className="resume-paper">
@@ -354,51 +341,33 @@ export default function ResumeBuilder() {
               </div>
             </section>
             <section className="paper-section paper-skills">
-              <span className="paper-label">COMPETENCE MATRIX / 03</span>
+              <span className="paper-label">VERIFIED CAPABILITIES / 03</span>
               <div>
                 {skills.map((skill) => <button key={skill} type="button" onClick={() => setSkills((current) => current.filter((item) => item !== skill))}>{skill}<span>×</span></button>)}
                 <button className="add-skill" type="button" onClick={() => setSkills((current) => [...current, `Capability ${current.length + 1}`])}><Plus size={12} />Add</button>
               </div>
             </section>
-          </article>
-
-          <section className="candidate-matrix" aria-labelledby="candidate-matrix-title">
-            <div className="matrix-heading">
-              <div><span>Talent analytics</span><h2 id="candidate-matrix-title">Candidate matrix</h2></div>
-              <div className="filter-select">
-                <BarChart3 size={14} />
-                <select aria-label="Filter candidate status" value={filter} onChange={(event) => setFilter(event.target.value as 'All' | CandidateStatus)}>
-                  <option>All</option><option>Shortlisted</option><option>Under Review</option><option>Scheduled</option><option>Interviewed</option>
-                </select>
-                <ChevronDown size={13} />
+            <section className="paper-section">
+              <span className="paper-label">CAREER PASSPORT / 04</span>
+              <div className="paper-passport-grid">
+                <div><span>Passport strength</span><strong>{passport.score}%</strong></div>
+                <div><span>Profile foundation</span><strong>{passport.profileScore}%</strong></div>
+                <div><span>Proof points</span><strong>{passport.proofPoints}</strong></div>
+                <div><span>Verified outcomes</span><strong>{passport.completedProofs}</strong></div>
               </div>
-            </div>
-            <div className="matrix-table">
-              <div className="matrix-head"><span>Candidate</span><span>Status</span><span>Signal</span><span>Evaluate</span></div>
-              {filteredCandidates.map((candidate) => (
-                <div className={`matrix-row ${candidate.selected ? 'is-selected' : ''}`} key={candidate.id}>
-                  <div className="matrix-candidate">
-                    <button className={`studio-check ${candidate.selected ? 'is-checked' : ''}`} type="button" aria-label={`Select ${candidate.name}`} onClick={() => toggleCandidate(candidate.id)}>{candidate.selected && <Check size={11} />}</button>
-                    <span className="candidate-avatar">{candidate.initials}</span>
-                    <div><strong>{candidate.name}</strong><small>{candidate.role}</small></div>
-                  </div>
-                  <button type="button" onClick={() => cycleCandidateStatus(candidate.id)} className={`status-pill ${statusStyles[candidate.status]}`}><i />{candidate.status}</button>
-                  <div className="signal-score"><span><i style={{ width: `${candidate.score}%` }} /></span><strong>{candidate.score}</strong></div>
-                  <button className="evaluate-button" type="button" onClick={() => { toggleCandidate(candidate.id); setNotice(`${candidate.name} evaluation queued`); }}><CircleGauge size={14} />Evaluate</button>
-                </div>
-              ))}
-            </div>
-            <div className="matrix-footer">
-              <span><UserRoundCheck size={14} />{candidates.filter((candidate) => candidate.selected).length} candidates selected</span>
-              <button type="button" onClick={() => setCandidates((current) => current.map((candidate) => ({ ...candidate, selected: true })))}>Select all visible</button>
-            </div>
-          </section>
+            </section>
+            <section className="paper-section">
+              <span className="paper-label">PROFESSIONAL SIGNAL / 05</span>
+              <div className="paper-signal-note"><BadgeCheck size={18} /><div><strong>Evidence-led JobX profile</strong><p>Skills and career outcomes are supported by profile evidence, employer missions, and verified contributions. Verification cannot be purchased.</p></div></div>
+            </section>
+            <footer className="paper-footer"><span>JOBX CAREER PASSPORT</span><span>LIVE CANDIDATE DOCUMENT</span></footer>
+          </article>
         </section>
       </div>
 
       <footer className="studio-footer">
-        <span><BriefcaseBusiness size={14} />JobX intelligence workspace</span>
-        <span>Priority signal: <strong>{priority}</strong></span>
+        <span><BriefcaseBusiness size={14} />JobX profile editor</span>
+        <span>Job search priority: <strong>{priority}</strong></span>
       </footer>
     </div>
   );

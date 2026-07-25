@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapPin, Briefcase, Mail, Link as LinkIcon, Edit2, Eye, Star, CheckCircle, X, Save, Heart, MessageSquare, Share2, Bookmark, Trash2, MoreHorizontal, Edit3, Globe, Lock, Check, Clock, Camera, ChevronLeft, ChevronRight, Play, Volume2, VolumeX, Plus } from 'lucide-react';
 import { useStore } from '../store/StoreProvider';
@@ -28,6 +28,7 @@ function timeAgo(dateStr: string): string {
 
 export default function Profile() {
   const store = useStore();
+  const navigate = useNavigate();
   const user = store.user;
   const [searchParams, setSearchParams] = useSearchParams();
   const [editing, setEditing] = useState(false);
@@ -67,14 +68,7 @@ export default function Profile() {
   ];
 
   const startEdit = () => {
-    setEditForm({ name: user.name, title: user.title, bio: user.bio, location: user.location, website: user.website });
-    setEditAvatar('');
-    setEditSkills(user.skills.map(({ skill }) => skill));
-    setSkillDraft('');
-    setEditing(true);
-    window.requestAnimationFrame(() => {
-      editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    navigate('/studio?from=profile');
   };
 
   useEffect(() => {

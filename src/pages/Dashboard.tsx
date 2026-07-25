@@ -5,20 +5,17 @@ import {
   BadgeCheck,
   Bookmark,
   BriefcaseBusiness,
-  Compass,
-  FileCheck2,
   FileText,
-  Route,
   Star,
   Target,
   TrendingUp,
+  Trophy,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MOCK_JOBS } from '../data';
 import { useStore } from '../store/StoreProvider';
 import JobCard from '../components/JobCard';
 import UserAvatar from '../components/UserAvatar';
-import CareerPassportCard from '../components/CareerPassportCard';
 import { getCareerPassport, getCareerRecommendations } from '../services/careerIntelligenceService';
 
 type DashboardTab = 'recommended' | 'saved' | 'applied';
@@ -65,30 +62,6 @@ export default function Dashboard() {
     applied: appliedJobs.length,
   };
 
-  const nextActions = [
-    {
-      title: 'Strengthen your career signal',
-      description: passport.recommendations[0] || 'Add one more proof-backed skill to improve matching.',
-      icon: BadgeCheck,
-      path: '/profile?edit=true',
-      action: 'Update profile',
-    },
-    {
-      title: 'Check application momentum',
-      description: store.appliedJobs.length + ' application' + (store.appliedJobs.length === 1 ? '' : 's') + ' ready to review in your tracker.',
-      icon: Route,
-      path: '/applications',
-      action: 'Open tracker',
-    },
-    {
-      title: 'Polish your next application',
-      description: 'Keep a role-ready resume on hand for high-match opportunities.',
-      icon: FileCheck2,
-      path: '/resume',
-      action: 'Open resume',
-    },
-  ];
-
   return (
     <div className="w-full pb-8">
       <motion.section
@@ -127,6 +100,9 @@ export default function Dashboard() {
               <Link to="/profile?edit=true" className="product-focus inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/15">
                 <BadgeCheck className="h-4 w-4 text-blue-200" /> Strengthen my profile
               </Link>
+              <Link to="/missions" className="product-focus inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-blue-300/30 bg-blue-400/15 px-4 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-blue-400/25">
+                <Trophy className="h-4 w-4 text-blue-200" /> Missions & tests
+              </Link>
             </div>
           </div>
 
@@ -134,11 +110,9 @@ export default function Dashboard() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-200">Career pulse</p>
-                <p className="mt-2 text-sm font-semibold text-white/70">Your profile is building momentum.</p>
+                <p className="mt-2 text-sm font-semibold text-white/70">{firstName}'s profile is building momentum.</p>
               </div>
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-blue-200 ring-1 ring-white/10">
-                <TrendingUp className="h-5 w-5" />
-              </span>
+              <UserAvatar src={store.user.avatar} name={store.user.name} size="md" className="h-11 w-11 border-2 border-white/20 shadow-lg" />
             </div>
 
             <div className="mt-6 flex items-center gap-5">
@@ -157,7 +131,7 @@ export default function Dashboard() {
                 <div className="h-px bg-white/10" />
                 <div className="flex items-center justify-between gap-3 text-sm"><span className="text-slate-300">Applications</span><strong>{store.appliedJobs.length}</strong></div>
                 <div className="h-px bg-white/10" />
-                <div className="flex items-center justify-between gap-3 text-sm"><span className="text-slate-300">Saved roles</span><strong>{savedJobs.length}</strong></div>
+                <div className="flex items-center justify-between gap-3 text-sm"><span className="text-slate-300">Proof points</span><strong>{passport.proofPoints}</strong></div>
               </div>
             </div>
           </div>
@@ -168,7 +142,7 @@ export default function Dashboard() {
         {[
           { label: 'Matches ready', value: recommendedJobs.length, detail: 'Curated for your direction', icon: Target, tone: 'text-[#155eef] bg-blue-50' },
           { label: 'Applications', value: store.appliedJobs.length, detail: 'Track every employer update', icon: BriefcaseBusiness, tone: 'text-violet-700 bg-violet-50' },
-          { label: 'Profile completion', value: passport.score + '%', detail: passport.level + ' profile', icon: BadgeCheck, tone: 'text-emerald-700 bg-emerald-50' },
+          { label: 'Passport strength', value: passport.score + '%', detail: passport.completedProofs + ' verified outcomes', icon: BadgeCheck, tone: 'text-emerald-700 bg-emerald-50' },
         ].map((metric, index) => (
           <motion.article
             key={metric.label}
@@ -187,7 +161,7 @@ export default function Dashboard() {
         ))}
       </section>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="mt-8">
         <section aria-labelledby="opportunities-title">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -257,38 +231,6 @@ export default function Dashboard() {
           </AnimatePresence>
         </section>
 
-        <aside className="space-y-4 self-start lg:sticky lg:top-24" aria-label="Career guidance">
-          <CareerPassportCard user={store.user} jobs={MOCK_JOBS} compact />
-
-          <section className="product-surface overflow-hidden" aria-labelledby="next-actions-title">
-            <div className="border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#155eef]">Momentum plan</p>
-                  <h2 id="next-actions-title" className="mt-1 text-base font-extrabold text-slate-900 dark:text-white">Next best actions</h2>
-                </div>
-                <Compass className="h-5 w-5 text-slate-400" />
-              </div>
-            </div>
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {nextActions.map((action, index) => (
-                <Link key={action.title} to={action.path} className="product-focus group flex gap-3 px-5 py-4 transition-colors hover:bg-blue-50/50 dark:hover:bg-slate-800/60">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#eef4ff] text-[#155eef] dark:bg-blue-950/50 dark:text-blue-200"><action.icon className="h-4 w-4" /></span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start gap-2">
-                      <span className="mt-0.5 text-[0.62rem] font-black text-slate-300">0{index + 1}</span>
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-800 group-hover:text-[#155eef] dark:text-slate-100">{action.title}</h3>
-                        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">{action.description}</p>
-                        <span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#155eef]">{action.action}<ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        </aside>
       </div>
     </div>
   );

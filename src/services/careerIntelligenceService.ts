@@ -1,5 +1,7 @@
 import { MOCK_JOBS, type Job } from '../data';
 import type { User } from './userService';
+import { proofService } from './proofService';
+import { projectService } from './projectService';
 
 type MatchKind = 'exact' | 'alias' | 'adjacent';
 
@@ -21,6 +23,9 @@ export interface JobIntelligence {
 
 export interface CareerPassport {
   score: number;
+  profileScore: number;
+  proofPoints: number;
+  completedProofs: number;
   level: 'Emerging' | 'Developing' | 'Established' | 'Leadership';
   targetRole: string;
   strengths: string[];
@@ -216,6 +221,9 @@ function inferCareerLevel(user: User): CareerPassport['level'] {
 }
 
 export function getCareerPassport(user: User, jobs: Job[] = MOCK_JOBS): CareerPassport {
+  const progress = proofService.getProgress();
+  const proofPoints = proofService.getEarnedPoints(progress);
+  const projectPoints = projectService.getVerificationPoints(user);
   const sections = [
     { label: 'Career identity', complete: Boolean(user.name.trim() && user.title.trim()), detail: user.title.trim() || 'Add the role you are growing toward.' },
     { label: 'Professional story', complete: user.bio.trim().length >= 40, detail: user.bio.trim().length >= 40 ? 'Your summary gives employers context.' : 'Write a short summary of your strengths and direction.' },
@@ -244,7 +252,10 @@ export function getCareerPassport(user: User, jobs: Job[] = MOCK_JOBS): CareerPa
   ].slice(0, 3);
 
   return {
-    score: getProfileCompletion(user),
+    score: Math.min(100, getProfileCompletion(user) + Math.min(30, proofPoints + projectPoints)),
+    profileScore: getProfileCompletion(user),
+    proofPoints,
+    completedProofs: progress.completedIds.length,
     level: inferCareerLevel(user),
     targetRole: user.title.trim() || 'Your next career move',
     strengths,

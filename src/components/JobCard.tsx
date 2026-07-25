@@ -6,6 +6,7 @@ import { useStore } from '../store/StoreProvider';
 import UserAvatar from './UserAvatar';
 import { getJobIntelligence } from '../services/careerIntelligenceService';
 import JobTrustSignals from './JobTrustSignals';
+import EmployerProfileLink from './EmployerProfileLink';
 
 const JobCard: FC<{ job: Job; variant?: 'default' | 'compact' }> = ({ job, variant = 'default' }) => {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const JobCard: FC<{ job: Job; variant?: 'default' | 'compact' }> = ({ job, varia
     return (
       <div role="link" tabIndex={0} onClick={openJob} onKeyDown={handleKeyDown} className="product-surface product-card-interactive product-focus cursor-pointer p-4">
         <div className="flex items-start gap-3">
-          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white shadow-sm ${job.logoColor}`}>{job.logoInitials}</span>
+          <EmployerProfileLink job={job}><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold text-white shadow-sm ${job.logoColor}`}>{job.logoInitials}</span></EmployerProfileLink>
           <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-extrabold tracking-[-0.02em] text-slate-900 dark:text-white">{job.title}</h3><p className="mt-0.5 truncate text-xs font-semibold text-slate-500 dark:text-slate-400">{job.company}</p><p className="mt-2 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400"><MapPin className="h-3.5 w-3.5" /> {job.location}<span className="mx-0.5">·</span>{job.postedAt}</p></div>
         </div>
       </div>
@@ -44,7 +45,7 @@ const JobCard: FC<{ job: Job; variant?: 'default' | 'compact' }> = ({ job, varia
     <div role="link" tabIndex={0} onClick={openJob} onKeyDown={handleKeyDown} className="product-surface product-card-interactive product-focus relative cursor-pointer p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3.5">
-          <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-extrabold text-white shadow-sm ${job.logoColor}`}>{job.logoInitials}</span>
+          <EmployerProfileLink job={job}><span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-extrabold text-white shadow-sm ${job.logoColor}`}>{job.logoInitials}</span></EmployerProfileLink>
           <div className="min-w-0"><h3 className="truncate text-lg font-extrabold tracking-[-0.03em] text-slate-900 dark:text-white">{job.title}</h3><p className="mt-0.5 truncate text-sm font-semibold text-slate-500 dark:text-slate-400">{job.company}</p></div>
         </div>
         <button type="button" aria-label={isSaved ? `Unsave ${job.title}` : `Save ${job.title}`} onClick={toggleSave} className="product-focus -mr-2 -mt-2 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#155eef] dark:hover:bg-slate-800">

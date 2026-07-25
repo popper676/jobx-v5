@@ -21,19 +21,23 @@ export default function CareerPassportCard({ user, jobs, compact = false, onUpda
         <div className="flex min-w-0 items-start gap-3">
           <BriefcaseBusiness aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-slate-500 dark:text-slate-400" />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Career profile</p>
-            <h2 id="career-passport-title" className="mt-1 text-lg font-bold tracking-[-0.025em] text-slate-900 dark:text-white">Profile overview</h2>
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Career Passport</p>
+            <h2 id="career-passport-title" className="mt-1 text-lg font-bold tracking-[-0.025em] text-slate-900 dark:text-white">Verified career signal</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{passport.targetRole} · {passport.level} profile</p>
           </div>
         </div>
         <div className="shrink-0 text-right">
           <p className="flex items-center justify-end gap-1 text-xl font-bold tracking-[-0.04em] text-slate-900 dark:text-white"><TrendingUp aria-hidden="true" className="h-4 w-4 text-[#155eef]" />{passport.score}%</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Profile completion</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Passport strength</p>
         </div>
       </div>
 
       <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
         <div className="h-full rounded-full bg-[#014BAA] transition-[width] duration-500" style={{ width: `${passport.score}%` }} />
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3 text-xs font-semibold text-slate-500">
+        <span>{passport.profileScore}% profile foundation</span>
+        <span className="text-[#155eef]">{passport.proofPoints} earned proof points</span>
       </div>
 
       {!compact && (
@@ -78,9 +82,10 @@ export default function CareerPassportCard({ user, jobs, compact = false, onUpda
             Update profile <ArrowRight className="h-4 w-4" />
           </button>
         ) : (
-          <Link to="/profile?edit=true" className="product-focus mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#155eef] hover:text-[#0c3e9e]">
-            Update profile <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="mt-4 flex flex-wrap gap-4">
+            <Link to="/missions" className="product-focus inline-flex items-center gap-1.5 text-sm font-semibold text-[#155eef] hover:text-[#0c3e9e]">Earn verification <ArrowRight className="h-4 w-4" /></Link>
+            <Link to="/profile?edit=true" className="product-focus inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800">Update profile</Link>
+          </div>
         )}
       </div>
     </section>

@@ -8,6 +8,7 @@ export interface Conversation {
   time: string;
   unread: number;
   online: boolean;
+  role?: string;
 }
 
 export interface Message {
@@ -21,9 +22,9 @@ export interface Message {
 }
 
 const DEFAULT_CONVERSATIONS: Conversation[] = [
-  { id: '1', name: 'Sarah Chen', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', lastMessage: "Sounds great! Let's catch up tomorrow.", time: '10:45 AM', unread: 2, online: true },
-  { id: '2', name: 'Marcus Rodriguez', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', lastMessage: 'Did you see the new update?', time: 'Yesterday', unread: 0, online: false },
-  { id: '3', name: 'Jenna Miles', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', lastMessage: 'Can you send over the Figma files?', time: 'Tue', unread: 0, online: true },
+  { id: '1', name: 'Sarah Chen', role: 'Senior React Engineer', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', lastMessage: "Sounds great! Let's catch up tomorrow.", time: '10:45 AM', unread: 2, online: true },
+  { id: '2', name: 'Marcus Rodriguez', role: 'Product Designer', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', lastMessage: 'Did you see the new update?', time: 'Yesterday', unread: 0, online: false },
+  { id: '3', name: 'Jenna Miles', role: 'UX Researcher', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', lastMessage: 'Can you send over the Figma files?', time: 'Tue', unread: 0, online: true },
 ];
 
 const DEFAULT_MESSAGES: Message[] = [
@@ -86,7 +87,7 @@ export const messageService = {
   searchConversations(query: string): Conversation[] {
     const q = query.toLowerCase();
     if (!q) return this.getConversations();
-    return this.getConversations().filter(c => c.name.toLowerCase().includes(q) || c.lastMessage.toLowerCase().includes(q));
+    return this.getConversations().filter(c => c.name.toLowerCase().includes(q) || c.role?.toLowerCase().includes(q) || c.lastMessage.toLowerCase().includes(q));
   },
 
   reset() {

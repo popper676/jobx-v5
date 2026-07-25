@@ -116,7 +116,18 @@ const generateMockData = (): Application[] => {
 
 export const antiGhostingService = {
   getApplications(): Application[] {
-    const apps = db.get<Application[]>(DB_KEY, []);
+    let apps = db.get<Application[]>(DB_KEY, []);
+    // Migrate candidate-created applications from earlier flexible response
+    // promises to JobX's single, transparent seven-day policy.
+    let migrated = false;
+    apps = apps.map((application) => {
+      if (!application.id.startsWith('application-')) return application;
+      const sevenDayDeadline = new Date(new Date(application.appliedAt).getTime() + RESPONSE_WINDOW_DAYS * 86_400_000).toISOString();
+      if (application.deadline === sevenDayDeadline) return application;
+      migrated = true;
+      return { ...application, deadline: sevenDayDeadline };
+    });
+    if (migrated) db.set(DB_KEY, apps);
     if (apps.length === 0) {
       const mock = generateMockData();
       db.set(DB_KEY, mock);

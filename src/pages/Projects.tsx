@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, FolderGit2, Heart, MessageSquare, ExternalLink, Github, Users, X } from 'lucide-react';
+import { CheckCircle2, Eye, FolderGit2, Heart, MessageSquare, Search, Users, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store/StoreProvider';
 import UserAvatar from '../components/UserAvatar';
 import SubmitProjectModal from '../components/SubmitProjectModal';
-import { projectService, type CommunityProject } from '../services/projectService';
+import { PROJECT_CATEGORIES, projectService, type CommunityProject } from '../services/projectService';
 
 export default function Projects() {
   const store = useStore();
@@ -13,6 +13,8 @@ export default function Projects() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submittedProjects, setSubmittedProjects] = useState<CommunityProject[]>(() => projectService.getSubmittedProjects());
   const [notice, setNotice] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('All categories');
 
   const projects = useMemo(() => [
     ...submittedProjects,
@@ -23,7 +25,8 @@ export default function Projects() {
     if (activeTab === 'Open to Collab') return p.openToCollab;
     if (activeTab === 'My Projects') return p.myProject;
     return true;
-  });
+  }).filter((project) => category === 'All categories' || project.category === category)
+    .filter((project) => `${project.title} ${project.description} ${project.tags.join(' ')}`.toLowerCase().includes(query.trim().toLowerCase()));
 
   const handleSubmitted = (project: CommunityProject) => {
     setSubmittedProjects((current) => [project, ...current]);
@@ -33,7 +36,7 @@ export default function Projects() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto w-full">
+    <div className="mx-auto w-full max-w-7xl">
       <div className="flex justify-between items-end mb-6">
         <div>
           <motion.h1
@@ -68,7 +71,12 @@ export default function Projects() {
 
       {notice && <div role="status" className="mb-6 flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800"><span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" />{notice}</span><button type="button" onClick={() => setNotice(null)} aria-label="Dismiss project confirmation" className="rounded p-0.5 text-emerald-700 hover:bg-emerald-100"><X className="h-4 w-4" /></button></div>}
 
-      <div className="flex items-center gap-2 mb-8 border-b border-gray-200 pb-px">
+      <section className="mb-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_15rem]">
+        <label className="relative"><span className="sr-only">Search projects</span><Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search projects, skills, or creators" className="product-focus min-h-12 w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm font-semibold text-slate-900 shadow-sm outline-none placeholder:text-slate-400" /></label>
+        <label><span className="sr-only">Project category</span><select value={category} onChange={(event) => setCategory(event.target.value)} className="product-focus min-h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm outline-none"><option>All categories</option>{PROJECT_CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select></label>
+      </section>
+
+      <div className="mb-8 flex items-center gap-2 border-b border-gray-200 pb-px">
         {['All', 'Open to Collab', 'My Projects'].map((tab, index) => (
           <motion.button
             key={tab}
@@ -89,7 +97,7 @@ export default function Projects() {
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={activeTab}
+          key={`${activeTab}-${category}-${query}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
@@ -118,14 +126,7 @@ export default function Projects() {
                       <Users className="w-3 h-3" /> Collab
                     </span>
                   )}
-                </div>
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-20">
-                  <button className="p-2 bg-white text-gray-900 rounded-full hover:bg-blue-500 hover:text-white transition-colors">
-                    <ExternalLink className="w-5 h-5" />
-                  </button>
-                  <button className="p-2 bg-white text-gray-900 rounded-full hover:bg-gray-200 transition-colors">
-                    <Github className="w-5 h-5" />
-                  </button>
+                  <span className="w-fit rounded-md bg-white/95 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-700 shadow-sm">{project.category || 'Web Apps'}</span>
                 </div>
               </div>
 
@@ -152,6 +153,8 @@ export default function Projects() {
                   </div>
 
                   <div className="flex items-center gap-3 text-gray-500 text-xs">
+                    <span className="flex items-center gap-1" title="Visitors"><Eye className="h-4 w-4" />{project.metrics.visitors || 0}</span>
+                    <span className="flex items-center gap-1" title="Collaborators"><Users className="h-4 w-4" />{project.metrics.collaborators || 0}</span>
                     <button className="flex items-center gap-1 hover:text-[#014BAA] transition-colors">
                       <Heart className="w-4 h-4" />
                       <span>{project.metrics.likes}</span>
@@ -165,6 +168,7 @@ export default function Projects() {
               </div>
             </motion.div>
           ))}
+          {filteredProjects.length === 0 && <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center"><Search className="mx-auto h-8 w-8 text-slate-300" /><h2 className="mt-3 text-lg font-extrabold text-slate-900">No projects match</h2><p className="mt-1 text-sm text-slate-500">Try another category or search term.</p></div>}
         </motion.div>
       </AnimatePresence>
 

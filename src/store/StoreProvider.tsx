@@ -11,7 +11,7 @@ import { antiGhostingService } from '../services/antiGhostingService';
 import { employerJobService } from '../services/employerJobService';
 import { getJobIntelligence } from '../services/careerIntelligenceService';
 import { Application, ApplicantStatus } from '../types';
-import { getJobTrustProfile } from '../services/trustService';
+import { proofService } from '../services/proofService';
 
 interface StoreState {
   auth: AuthState;
@@ -182,7 +182,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     const user = userService.get();
     const matchScore = getJobIntelligence(job, user).score;
-    const trustProfile = getJobTrustProfile(job);
     const applicationResult = antiGhostingService.createApplication({
       jobId: job.id,
       jobTitle: job.title,
@@ -192,7 +191,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       candidateHeadline: user.title,
       candidateAvatar: user.avatar,
       matchScore,
-      responseCommitmentDays: trustProfile.responseCommitmentDays,
+      responseCommitmentDays: 7,
     });
     if (!applicationResult.ok) return { success: false, error: applicationResult.error };
 
@@ -351,6 +350,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     messageService.reset();
     notificationService.reset();
     myDayService.reset();
+    proofService.reset();
     setAuth(authService.getState());
     setUser(userService.get());
     setPosts(postService.getAll());

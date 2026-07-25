@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, CheckCircle2, Clock3, FileText, ShieldCheck, XCircle } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BadgeCheck, BriefcaseBusiness, CalendarDays, CheckCircle2, Clock3, FileText, ShieldCheck, XCircle } from 'lucide-react';
 import { useStore } from '../store/StoreProvider';
 import { antiGhostingService } from '../services/antiGhostingService';
 import { Application, ApplicantStatus } from '../types';
@@ -48,7 +48,7 @@ export default function ApplicationsPage() {
 
   return (
     <div className="product-page min-h-[calc(100vh-4rem)] py-7 sm:py-10">
-      <div className="product-shell max-w-5xl">
+      <div className="product-shell max-w-6xl">
         <section className="grid gap-6 border-b border-slate-200 pb-8 dark:border-slate-800 md:grid-cols-[1fr_auto] md:items-end">
           <div><span className="product-eyebrow">Your application tracker</span><h1 className="product-title mt-4 text-4xl font-extrabold sm:text-5xl">Every application, out in the open.</h1><p className="product-copy mt-3 max-w-2xl text-sm sm:text-base">Follow the status, response deadline and next decision for each role—all in one clear view.</p></div>
           <div className="grid grid-cols-2 divide-x divide-slate-200 rounded-xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-900"><div className="px-4"><p className="text-2xl font-extrabold tracking-[-0.04em] text-slate-900 dark:text-white">{candidateApplications.length}</p><p className="mt-0.5 text-[0.65rem] font-extrabold uppercase tracking-[0.08em] text-slate-500">Applications</p></div><div className="px-4"><p className="text-2xl font-extrabold tracking-[-0.04em] text-[#155eef]">{respondedCount}</p><p className="mt-0.5 text-[0.65rem] font-extrabold uppercase tracking-[0.08em] text-slate-500">Responses</p></div></div>
@@ -65,24 +65,93 @@ export default function ApplicationsPage() {
 const ApplicationCard: React.FC<{ application: Application }> = ({ application }) => {
   const status = statusPresentation(application.status);
   const responseRate = antiGhostingService.getCompanyResponseRate(application.companyId);
-  const responded = application.employerResponded;
-  const progressed = !['New', 'Viewed', 'Rejected', 'Expired'].includes(application.status);
   const commitmentDays = responseCommitmentDays(application);
+  const companyInitials = (application.companyName || 'Employer').split(/\s+/).map((word) => word[0]).join('').slice(0, 2).toUpperCase();
+  const pipelineStage = getPipelineStage(application);
+  const pipeline = [
+    { label: 'Applied', detail: formatDate(application.appliedAt) },
+    { label: 'Application review', detail: pipelineStage > 1 ? 'Review completed' : 'Employer reviewing' },
+    { label: 'Employer response', detail: application.respondedAt ? formatDate(application.respondedAt) : `Due ${formatDate(application.deadline)}` },
+    { label: 'Interview', detail: ['Phone Screen', 'Interview'].includes(application.status) ? application.status : pipelineStage > 3 ? 'Completed' : 'Pending' },
+    { label: 'Final decision', detail: ['Offer', 'Hired', 'Rejected'].includes(application.status) ? application.status : 'Pending' },
+  ];
 
   return (
-    <article className="product-surface product-card-interactive p-5 sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">{application.companyName || 'Employer'}</p><h2 className="mt-1 text-lg font-extrabold tracking-[-0.025em] text-slate-900 dark:text-white">{application.jobTitle}</h2><p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">Applied {formatDate(application.appliedAt)}</p></div><span className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold ${status.className}`}>{status.icon}{status.label}</span></div>
-      <div className="mt-6 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-4 dark:border-slate-700 dark:bg-slate-900/60"><ProgressStep label="Applied" completed /><span className={`h-px ${responded ? 'bg-[#155eef]' : 'border-t border-dashed border-slate-300 dark:border-slate-600'}`} /><ProgressStep label="Employer update" completed={responded} active={!responded} /><span className={`h-px ${progressed ? 'bg-[#155eef]' : 'border-t border-dashed border-slate-300 dark:border-slate-600'}`} /><ProgressStep label={progressed ? application.status : 'Next step'} completed={progressed} /></div>
-      <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-3 dark:border-slate-800"><Metric label={`${commitmentDays}-day response deadline`} value={formatDate(application.deadline)} /><Metric label="Employer response rate" value={`${responseRate}% on time`} /><Metric label="Your profile match" value={`${application.matchScore}%`} /></div>
+    <article className="product-surface product-card-interactive overflow-hidden border-slate-200 p-5 sm:p-7">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-4">
+          <span className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#12213a] to-[#155eef] text-xs font-black text-white shadow-lg"><span className="absolute -right-2 -top-2 h-7 w-7 rounded-full bg-white/15" />{companyInitials}<BadgeCheck className="absolute bottom-1 right-1 h-3 w-3 text-blue-100" /></span>
+          <div><p className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">{application.companyName || 'Employer'}</p><h2 className="mt-1 text-xl font-extrabold tracking-[-0.035em] text-slate-900 dark:text-white">{application.jobTitle}</h2><p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400"><CalendarDays className="h-3.5 w-3.5" />Applied {formatDate(application.appliedAt)}</p></div>
+        </div>
+        <span className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-extrabold ${status.className}`}>{status.icon}{status.label}</span>
+      </div>
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-900/60" aria-label={`Application progress: ${pipeline[pipelineStage].label}`}>
+        <div className="mb-3 flex items-center justify-between gap-3 px-1">
+          <p className="text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-slate-500">Application journey</p>
+          <p className="text-xs font-bold text-[#155eef]">Stage {pipelineStage + 1} of {pipeline.length}</p>
+        </div>
+        <div className="flex min-w-[760px]" role="list">
+          {pipeline.map((step, index) => (
+            <PipelineStep
+              key={step.label}
+              index={index}
+              label={step.label}
+              detail={step.detail}
+              state={index < pipelineStage ? 'completed' : index === pipelineStage ? 'current' : 'upcoming'}
+              terminal={application.status === 'Expired' && index === pipelineStage ? 'expired' : application.status === 'Rejected' && index === pipelineStage ? 'rejected' : undefined}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-3 dark:border-slate-800"><Metric icon={<Clock3 className="h-4 w-4" />} label={`${commitmentDays}-day expiry window`} value={formatDate(application.deadline)} /><Metric icon={<ShieldCheck className="h-4 w-4" />} label="Employer verification" value={`${responseRate}% response trust`} /><Metric icon={<BriefcaseBusiness className="h-4 w-4" />} label="Your profile match" value={`${application.matchScore}%`} /></div>
       <p className="mt-5 flex items-start gap-2 text-sm leading-5 text-slate-600 dark:text-slate-300"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#155eef]" />{responseCopy(application)}</p>
     </article>
   );
 };
 
-function ProgressStep({ label, completed, active = false }: { label: string; completed?: boolean; active?: boolean }) {
-  return <div className="min-w-0 text-center"><span className={`mx-auto flex h-6 w-6 items-center justify-center rounded-full text-white ${completed ? 'bg-[#155eef]' : active ? 'border-2 border-[#155eef] bg-white dark:bg-slate-900' : 'border-2 border-slate-300 bg-white dark:border-slate-600 dark:bg-slate-900'}`}>{completed && <CheckCircle2 className="h-4 w-4" />}{active && <span className="h-2 w-2 rounded-full bg-[#155eef]" />}</span><p className={`mt-2 truncate text-[0.65rem] font-extrabold uppercase tracking-[0.04em] ${completed || active ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>{label}</p></div>;
+function getPipelineStage(application: Application): number {
+  if (['Offer', 'Hired', 'Rejected'].includes(application.status)) return 4;
+  if (['Phone Screen', 'Interview'].includes(application.status)) return 3;
+  if (application.employerResponded || ['Shortlisted', 'On Hold', 'Expired'].includes(application.status)) return 2;
+  return 1;
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-slate-800/70"><p className="text-[0.65rem] font-extrabold uppercase tracking-[0.08em] text-slate-500">{label}</p><p className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">{value}</p></div>;
+const PipelineStep: React.FC<{
+  index: number;
+  label: string;
+  detail: string;
+  state: 'completed' | 'current' | 'upcoming';
+  terminal?: 'expired' | 'rejected';
+}> = ({ index, label, detail, state, terminal }) => {
+  const tones = terminal === 'expired'
+    ? 'from-amber-500 to-orange-500 text-white'
+    : terminal === 'rejected'
+      ? 'from-rose-600 to-red-500 text-white'
+      : state === 'completed'
+        ? 'from-[#123f8c] to-[#155eef] text-white'
+        : state === 'current'
+          ? 'from-[#155eef] to-[#5b6df8] text-white shadow-[0_8px_24px_rgba(21,94,239,0.25)]'
+          : 'from-slate-200 to-slate-100 text-slate-500 dark:from-slate-700 dark:to-slate-800 dark:text-slate-300';
+
+  return (
+    <div
+      role="listitem"
+      aria-current={state === 'current' ? 'step' : undefined}
+      className={`relative -ml-2 flex min-h-[5.7rem] flex-1 items-center bg-gradient-to-r py-3 pl-8 pr-5 first:ml-0 first:pl-5 ${tones}`}
+      style={{ clipPath: index === 0 ? 'polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%)' : 'polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%, 18px 50%)' }}
+    >
+      <span className={`mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black ${state === 'upcoming' ? 'border-slate-400/50 bg-white/60 text-slate-500 dark:bg-slate-900/50 dark:text-slate-300' : 'border-white/70 bg-white/15 text-white'}`}>
+        {state === 'completed' ? <CheckCircle2 className="h-5 w-5" /> : index + 1}
+      </span>
+      <span className="min-w-0">
+        <span className="block truncate text-[0.68rem] font-black uppercase tracking-[0.055em]">{label}</span>
+        <span className={`mt-1 block truncate text-[0.66rem] font-semibold ${state === 'upcoming' ? 'opacity-75' : 'text-white/80'}`}>{detail}</span>
+      </span>
+      {state === 'current' && <span className="absolute right-5 top-2 h-2 w-2 animate-pulse rounded-full bg-white shadow-[0_0_0_4px_rgba(255,255,255,0.2)]" />}
+    </div>
+  );
+};
+
+function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return <div className="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/70"><div className="flex items-center gap-2 text-[#155eef]">{icon}<p className="text-[0.65rem] font-extrabold uppercase tracking-[0.08em] text-slate-500">{label}</p></div><p className="mt-2 text-sm font-extrabold text-slate-900 dark:text-white">{value}</p></div>;
 }

@@ -1,7 +1,7 @@
 import { CheckCircle2, Code2, ExternalLink, Github, Image, Users, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { motion } from 'motion/react';
-import { projectService, type CommunityProject, type ProjectSubmission } from '../services/projectService';
+import { PROJECT_CATEGORIES, projectService, type CommunityProject, type ProjectSubmission } from '../services/projectService';
 import type { User } from '../services/userService';
 
 interface SubmitProjectModalProps {
@@ -18,6 +18,7 @@ const INITIAL_FORM: ProjectSubmission = {
   repositoryUrl: '',
   demoUrl: '',
   openToCollab: true,
+  category: 'Web Apps',
 };
 
 export default function SubmitProjectModal({ user, onClose, onSubmitted }: SubmitProjectModalProps) {
@@ -64,6 +65,8 @@ export default function SubmitProjectModal({ user, onClose, onSubmitted }: Submi
           {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm font-semibold text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">{error}</div>}
 
           <label className="block"><span className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Project title <span className="text-red-500">*</span></span><input required minLength={3} maxLength={80} value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} placeholder="e.g. JobX portfolio case study" className="product-focus mt-2 min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#155eef] dark:border-slate-700 dark:bg-slate-900 dark:text-white" /></label>
+
+          <label className="block"><span className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Category <span className="text-red-500">*</span></span><select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value as ProjectSubmission['category'] }))} className="product-focus mt-2 min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-[#155eef] dark:border-slate-700 dark:bg-slate-900 dark:text-white">{PROJECT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select></label>
 
           <label className="block"><span className="flex items-center justify-between text-sm font-extrabold text-slate-800 dark:text-slate-100"><span>What did you build? <span className="text-red-500">*</span></span><span className="text-xs font-semibold text-slate-400">{form.description.length}/1000</span></span><textarea required minLength={30} maxLength={1000} rows={5} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} placeholder="Explain the problem, your contribution, and the outcome. Clear context makes the work easier to evaluate." className="product-focus mt-2 w-full resize-y rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium leading-6 text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#155eef] dark:border-slate-700 dark:bg-slate-900 dark:text-white" /></label>
 

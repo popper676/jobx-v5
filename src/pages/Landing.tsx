@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BadgeCheck,
   BarChart3,
-  BriefcaseBusiness,
   Check,
   ChevronRight,
   CircleCheckBig,
@@ -27,6 +26,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+import BrandLogo from '../components/BrandLogo';
 
 const proofPoints = [
   { value: '92%', label: 'find salary transparency useful' },
@@ -68,10 +68,7 @@ export default function Landing() {
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 text-slate-950 shadow-[0_10px_40px_rgba(15,23,42,0.035)] backdrop-blur-2xl">
         <div className="mx-auto flex h-[4.75rem] w-[min(100%-2rem,78rem)] items-center justify-between">
           <button onClick={() => navigate('/landing')} className="product-focus inline-flex items-center gap-2.5 rounded-xl" aria-label="JobX home">
-            <span className="landing-shine flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-[#014BAA] text-white shadow-lg shadow-blue-500/20">
-              <BriefcaseBusiness className="h-[1.15rem] w-[1.15rem]" />
-            </span>
-            <span className="text-xl font-extrabold tracking-[-0.055em]">JobX</span>
+            <BrandLogo className="h-10 w-10" />
           </button>
 
           <nav className="hidden items-center gap-8 md:flex" aria-label="Marketing navigation">
@@ -336,7 +333,7 @@ export default function Landing() {
 
       <footer className="border-t border-slate-200 bg-white py-9">
         <div className="mx-auto flex w-[min(100%-2rem,78rem)] flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="inline-flex items-center gap-2.5"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#014BAA] text-white"><BriefcaseBusiness className="h-4 w-4" /></span><span className="text-lg font-extrabold tracking-[-0.05em] text-slate-950">JobX</span></div>
+          <BrandLogo className="h-9 w-9" wordmarkClassName="text-lg font-black tracking-[-0.055em] text-slate-950" />
           <p className="text-xs font-semibold text-slate-500">Skills first. Clarity always. Better careers for everyone.</p>
           <div className="flex items-center gap-2 text-xs font-bold text-slate-500"><MapPin className="h-3.5 w-3.5 text-[#155eef]" /> Built for talent everywhere</div>
         </div>
