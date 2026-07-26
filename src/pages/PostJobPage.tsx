@@ -40,6 +40,8 @@ import {
   Copy,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
+  WandSparkles,
 } from 'lucide-react';
 import ScrollReveal from '../components/employer/ScrollReveal';
 import SpotlightCard from '../components/employer/SpotlightCard';
@@ -217,6 +219,14 @@ export default function PostJobPage() {
   ];
   const completedSteps = stepCompletion.filter(Boolean).length;
   const progressPercent = Math.round((Math.max(step - 1, completedSteps) / (stepMeta.length - 1)) * 100);
+  const descriptionScore = Math.min(100,
+    (form.title.trim() ? 15 : 0)
+    + (form.department ? 10 : 0)
+    + Math.min(25, Math.floor(form.description.trim().length / 20) * 5)
+    + Math.min(20, form.skills.length * 5)
+    + (form.description.match(/\b(impact|outcome|deliver|improve|build|lead|measure)\b/gi)?.length || 0) * 3
+    + (form.salaryMin && form.salaryMax ? 10 : 0)
+  );
 
   // ===== HELPERS =====
   const update = <K extends keyof JobFormData>(key: K, value: JobFormData[K]) => {
@@ -585,27 +595,34 @@ export default function PostJobPage() {
                           </div>
                         </div>
 
+                        <section className="overflow-hidden rounded-2xl border border-[#173b67]/20 bg-gradient-to-br from-[#12213a] to-[#173b67] text-white shadow-lg shadow-blue-950/10">
+                          <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-start gap-4">
+                              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#b7ff3c] ring-1 ring-white/15"><WandSparkles className="h-6 w-6" /></span>
+                              <div><p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-[#b7ff3c]">Built into your posting workflow</p><h3 className="mt-1 text-xl font-black">AI Job Description Copilot</h3><p className="mt-1 max-w-xl text-xs leading-5 text-slate-300">Use the role information you already entered to create an inclusive, outcome-based description with clearer skills and expectations.</p></div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="min-w-24 rounded-xl bg-white/10 px-4 py-3 text-center"><strong className="block text-2xl font-black text-[#b7ff3c]">{descriptionScore}%</strong><span className="text-[0.62rem] font-bold text-slate-300">Posting quality</span></div>
+                              <button onClick={generateAIDescription} disabled={isGeneratingDescription || !form.title} className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-[#b7ff3c] px-4 text-sm font-black text-[#12213a] transition hover:bg-[#c9ff6f] disabled:cursor-not-allowed disabled:opacity-50"><Sparkles className={`h-4 w-4 ${isGeneratingDescription ? 'animate-pulse' : ''}`} />{isGeneratingDescription ? 'Analyzing role…' : form.description ? 'Improve with AI' : 'Draft with AI'}</button>
+                            </div>
+                          </div>
+                          <div className="grid gap-px border-t border-white/10 bg-white/10 sm:grid-cols-3">
+                            <div className="bg-[#12213a]/90 p-3 text-xs"><Check className="mr-1.5 inline h-3.5 w-3.5 text-[#b7ff3c]" />Bias-aware language scan</div>
+                            <div className="bg-[#12213a]/90 p-3 text-xs"><Check className="mr-1.5 inline h-3.5 w-3.5 text-[#b7ff3c]" />Outcome-focused responsibilities</div>
+                            <div className="bg-[#12213a]/90 p-3 text-xs"><Check className="mr-1.5 inline h-3.5 w-3.5 text-[#b7ff3c]" />Skills and seniority alignment</div>
+                          </div>
+                        </section>
+
                         {/* Description drafting assistance */}
                         <InputField label="Job Description" required error={errors.description} helpText={`${form.description.length} characters (min 20)`}>
                           <div className="relative">
                             <textarea rows={6} value={form.description} onChange={(e) => update('description', e.target.value)}
                               placeholder="Describe the role, responsibilities, team structure, and what you're looking for in an ideal candidate..."
                               className={`w-full bg-[#F8F3F0] rounded-xl px-4 py-3 text-sm text-gray-900 placeholder-gray-400 border outline-none transition-all focus:bg-white focus:ring-2 focus:ring-blue-500/20 resize-none ${errors.description ? 'border-red-300' : 'border-gray-200 focus:border-[#014BAA]'}`} />
-                            <div className="flex items-center justify-between mt-2">
-                              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={generateAIDescription} disabled={isGeneratingDescription || !form.title}
-                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-[#014BAA] bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50">
-                                <PenLine className="w-3.5 h-3.5" />
-                                {isGeneratingDescription ? 'Drafting...' : 'Suggest role draft'}
-                              </motion.button>
-                              {generatedDescription && (
-                                <motion.button whileHover={{ scale: 1.02 }} onClick={applyGeneratedDescription}
-                                  className="text-xs font-medium text-[#014BAA] hover:underline">Apply suggestion</motion.button>
-                              )}
-                            </div>
                             {generatedDescription && (
-                              <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="mt-2 p-3 bg-blue-50/50 border border-blue-100 rounded-xl text-sm text-gray-600">
-                                <p className="text-xs font-semibold text-[#014BAA] mb-1">JobX draft suggestion:</p>
-                                {generatedDescription}
+                              <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="mt-3 overflow-hidden rounded-xl border border-lime-200 bg-lime-50">
+                                <div className="flex items-center justify-between border-b border-lime-200 px-4 py-3"><p className="inline-flex items-center gap-2 text-xs font-black text-[#24451c]"><Sparkles className="h-4 w-4" />AI Copilot recommendation</p><button onClick={applyGeneratedDescription} className="rounded-lg bg-[#173b67] px-3 py-1.5 text-xs font-black text-white">Apply to job post</button></div>
+                                <p className="p-4 text-sm leading-6 text-slate-700">{generatedDescription}</p>
                               </motion.div>
                             )}
                           </div>
