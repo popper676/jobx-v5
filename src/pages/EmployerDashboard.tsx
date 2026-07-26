@@ -5,7 +5,6 @@ import {
   Briefcase,
   CheckCircle2,
   CircleDollarSign,
-  Eye,
   Folder,
   History,
   Landmark,
@@ -67,12 +66,6 @@ export default function EmployerDashboard() {
       && application.status !== 'Expired'
     ))
     .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
-
-  const responseGuidance = responseRate >= 80
-    ? 'Your team is keeping a strong response promise.'
-    : responseRate >= 50
-      ? 'A few timely replies will strengthen candidate trust.'
-      : 'Prioritise the response queue to rebuild candidate trust.';
 
   const refreshData = () => {
     setIsRefreshing(true);
@@ -282,27 +275,6 @@ export default function EmployerDashboard() {
             </div>
           </section>
 
-          <div className="grid gap-6 md:grid-cols-2">
-
-            <section className="rounded-2xl border border-blue-100 bg-[#F4F8FF] p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-white text-[#014BAA] shadow-sm">
-                  <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <span className="text-2xl font-bold tracking-tight text-[#014BAA] tabular-nums">{responseRate}%</span>
-              </div>
-              <p className="mt-4 text-sm font-bold text-slate-900">Response promise</p>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100">
-                <div className="h-full rounded-full bg-[#014BAA]" style={{ width: `${responseRate}%` }} />
-              </div>
-              <p className="mt-3 text-xs leading-5 text-slate-600">{responseGuidance}</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">Measured by replies sent within 7 days.</p>
-            </section>
-
-            <section className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div><span className="grid h-10 w-10 place-items-center rounded-xl bg-[#fcf0f5] text-[#173b67]"><Eye className="h-5 w-5" /></span><p className="mt-4 text-sm font-bold text-slate-900">Employer profile reach</p><p className="mt-1 text-xs text-slate-500">{MOCK_STATS.profileViews} profile views this week · 18% above average</p></div><Link to="/employer/settings" className="shrink-0 text-sm font-bold text-[#173b67]">Improve profile <ArrowRight className="inline h-4 w-4" /></Link>
-            </section>
-          </div>
         </div>
 
         <div className="mt-6 flex justify-end">
