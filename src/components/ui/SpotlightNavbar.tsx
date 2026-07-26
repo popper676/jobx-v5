@@ -12,14 +12,17 @@ export interface SpotlightNavbarProps {
   className?: string;
 }
 
+function matchesRoute(pathname: string, href: string) {
+  if (href === '/' || href === '/employer') return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function SpotlightNavbar({ items, className = '' }: SpotlightNavbarProps) {
   const navRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   
-  const currentIdx = items.findIndex(item => 
-    item.href === '/' ? location.pathname === '/' : location.pathname.startsWith(item.href)
-  );
+  const currentIdx = items.findIndex((item) => matchesRoute(location.pathname, item.href));
   
   const [activeIndex, setActiveIndex] = useState(currentIdx >= 0 ? currentIdx : 0);
   const [hoverX, setHoverX] = useState<number | null>(null);
@@ -29,9 +32,7 @@ export function SpotlightNavbar({ items, className = '' }: SpotlightNavbarProps)
   const ambienceX = useRef(0);
 
   useEffect(() => {
-    const newIdx = items.findIndex(item => 
-      item.href === '/' ? location.pathname === '/' : location.pathname.startsWith(item.href)
-    );
+    const newIdx = items.findIndex((item) => matchesRoute(location.pathname, item.href));
     if (newIdx >= 0) setActiveIndex(newIdx);
   }, [location.pathname, items]);
 
