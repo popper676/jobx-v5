@@ -71,7 +71,7 @@ export default function Layout() {
   const hasResults = searchResults.jobs.length > 0;
 
   const seekerNavLinks = [
-    { name: 'Workspace', path: '/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: 'About me', path: '/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
     { name: 'My Network', path: '/network', icon: <UsersRound className="w-5 h-5" /> },
     { name: 'Jobs', path: '/jobs', icon: <Briefcase className="w-5 h-5" /> },
     { name: 'Tracker', path: '/applications', icon: <FileText className="w-5 h-5" /> },

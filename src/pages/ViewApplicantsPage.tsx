@@ -19,11 +19,9 @@ import {
 import { Link } from 'react-router-dom';
 import UserAvatar from '../components/UserAvatar';
 import DeadlineCountdown from '../components/DeadlineCountdown';
-import CompanyResponseRate from '../components/CompanyResponseRate';
 import EmptyState from '../components/employer/EmptyState';
 import Breadcrumb from '../components/employer/Breadcrumb';
 import { useStore } from '../store/StoreProvider';
-import { antiGhostingService } from '../services/antiGhostingService';
 import { ApplicantStatus, Application } from '../types';
 import { getApplicantProfile } from '../data/applicantProfiles';
 
@@ -73,7 +71,6 @@ export default function ViewApplicantsPage() {
       .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()),
     [applications]
   );
-  const responseRate = antiGhostingService.getCompanyResponseRate('company_1');
   const jobs = useMemo(() => {
     const grouped = new Map<string, { id: string; title: string; count: number; awaiting: number }>();
     employerApplications.forEach((application) => {
@@ -108,7 +105,6 @@ export default function ViewApplicantsPage() {
 
   const selected = employerApplications.find((application) => application.id === selectedId) || null;
   const selectedProfile = selected ? getApplicantProfile(selected) : null;
-  const awaitingResponse = employerApplications.filter((application) => !application.employerResponded && application.status !== 'Expired').length;
 
   const selectApplicant = (applicationId: string) => {
     setSelectedId(applicationId);
@@ -173,18 +169,6 @@ export default function ViewApplicantsPage() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Applications</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">{employerApplications.length}</p>
-          </div>
-          <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-4 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#014BAA]">Needs response</p>
-            <p className="mt-1 text-2xl font-bold text-[#014BAA]">{awaitingResponse}</p>
-          </div>
-          <CompanyResponseRate rate={responseRate} />
-        </div>
-
         <section className="mb-6 rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm" aria-labelledby="roles-inbox-heading">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -315,6 +299,48 @@ export default function ViewApplicantsPage() {
                 </div>
                   </section>
 
+                  {selected.status === 'Expired' ? (
+                    <div role="status" className="mt-5 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> This response window has expired and has been recorded in the employer response rate.
+                    </div>
+                  ) : (
+                    <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">Candidate hiring stage</p>
+                          <p className="mt-1 text-xs text-gray-500">Changing the stage sends this candidate a clear update.</p>
+                        </div>
+                        <select
+                          value={PIPELINE_STATUSES.includes(selected.status) ? selected.status : ''}
+                          onChange={(event) => updateStage(selected, event.target.value as ApplicantStatus)}
+                          aria-label={`Change hiring stage for ${selected.candidateName}`}
+                          className="min-w-44 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 outline-none focus:border-[#014BAA] focus:ring-2 focus:ring-blue-100"
+                        >
+                          <option value="" disabled>Choose stage</option>
+                          {PIPELINE_STATUSES.map((status) => <option key={status} value={status}>{status === 'Rejected' ? 'Declined' : status}</option>)}
+                        </select>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {PIPELINE_STATUSES.map((status) => (
+                          <button
+                            key={status}
+                            type="button"
+                            onClick={() => updateStage(selected, status)}
+                            aria-pressed={selected.status === status}
+                            className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${selected.status === status ? statusClass(status) : 'border-gray-200 bg-white text-gray-600 hover:border-blue-200 hover:bg-blue-50/50'}`}
+                          >
+                            {status === 'Rejected' ? 'Decline' : status}
+                          </button>
+                        ))}
+                      </div>
+                      {selected.employerResponded && (
+                        <div role="status" className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-4 text-xs font-medium text-[#014BAA]">
+                          <ShieldCheck className="h-4 w-4" /> Candidate notified {selected.respondedAt ? formatDate(selected.respondedAt) : ''}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <section className="mt-7 border-t border-gray-100 pt-6" aria-labelledby="candidate-summary-heading">
                     <div className="flex items-center gap-2">
                       <UserRound className="h-4 w-4 text-[#014BAA]" />
@@ -408,47 +434,6 @@ export default function ViewApplicantsPage() {
                   </div>
                 </div>
 
-                {selected.status === 'Expired' ? (
-                  <div role="status" className="mt-5 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> This response window has expired and has been recorded in the employer response rate.
-                  </div>
-                ) : (
-                  <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">Candidate hiring stage</p>
-                        <p className="mt-1 text-xs text-gray-500">Changing the stage sends this candidate a clear update.</p>
-                      </div>
-                      <select
-                        value={PIPELINE_STATUSES.includes(selected.status) ? selected.status : ''}
-                        onChange={(event) => updateStage(selected, event.target.value as ApplicantStatus)}
-                        aria-label={`Change hiring stage for ${selected.candidateName}`}
-                        className="min-w-44 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 outline-none focus:border-[#014BAA] focus:ring-2 focus:ring-blue-100"
-                      >
-                        <option value="" disabled>Choose stage</option>
-                        {PIPELINE_STATUSES.map((status) => <option key={status} value={status}>{status === 'Rejected' ? 'Declined' : status}</option>)}
-                      </select>
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {PIPELINE_STATUSES.map((status) => (
-                        <button
-                          key={status}
-                          type="button"
-                          onClick={() => updateStage(selected, status)}
-                          aria-pressed={selected.status === status}
-                          className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${selected.status === status ? statusClass(status) : 'border-gray-200 bg-white text-gray-600 hover:border-blue-200 hover:bg-blue-50/50'}`}
-                        >
-                          {status === 'Rejected' ? 'Decline' : status}
-                        </button>
-                      ))}
-                    </div>
-                    {selected.employerResponded && (
-                      <div role="status" className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-4 text-xs font-medium text-[#014BAA]">
-                        <ShieldCheck className="h-4 w-4" /> Candidate notified {selected.respondedAt ? formatDate(selected.respondedAt) : ''}
-                      </div>
-                    )}
-                  </div>
-                )}
                 </div>
               </div>
             ) : (

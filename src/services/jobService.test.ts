@@ -9,7 +9,7 @@ describe('jobService', () => {
 
   it('should return all mock jobs', () => {
     const jobs = jobService.getAll();
-    expect(jobs.length).toBe(10);
+    expect(jobs.length).toBe(50);
     expect(jobs[0].title).toBe('Senior React Engineer');
   });
 
@@ -29,9 +29,14 @@ describe('jobService', () => {
     expect(resultsTitle.length).toBe(1);
     expect(resultsTitle[0].id).toBe('1');
 
-    // Query matches React in title or skills (Job 1 and Job 7)
+    // Query continues to match the original React roles as the catalogue grows.
     const resultsReact = jobService.search('React', '');
-    expect(resultsReact.length).toBe(2);
+    expect(resultsReact.map((job) => job.id)).toEqual(expect.arrayContaining(['1', '7']));
+    expect(resultsReact.every((job) => (
+      job.title.toLowerCase().includes('react')
+      || job.tags.some((tag) => tag.toLowerCase().includes('react'))
+      || job.skillsRequired.some((skill) => skill.toLowerCase().includes('react'))
+    ))).toBe(true);
 
     // Query matches company name
     const resultsCompany = jobService.search('StudioX', '');
@@ -45,11 +50,12 @@ describe('jobService', () => {
 
   it('should search jobs by location', () => {
     const resultsLoc = jobService.search('', 'Remote');
-    expect(resultsLoc.length).toBe(4); // Job 2, 5, 8, 9 are Remote
+    expect(resultsLoc.map((job) => job.id)).toEqual(expect.arrayContaining(['2', '5', '8', '9']));
+    expect(resultsLoc.every((job) => job.location.toLowerCase().includes('remote'))).toBe(true);
 
     const resultsSpecificLoc = jobService.search('', 'San Francisco');
-    expect(resultsSpecificLoc.length).toBe(1);
-    expect(resultsSpecificLoc[0].company).toBe('TechFlow');
+    expect(resultsSpecificLoc.map((job) => job.company)).toContain('TechFlow');
+    expect(resultsSpecificLoc.every((job) => job.location.includes('San Francisco'))).toBe(true);
   });
 
   it('should manage saving and unsaving jobs', () => {

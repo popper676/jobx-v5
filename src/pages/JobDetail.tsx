@@ -158,7 +158,6 @@ export default function JobDetail() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="mb-8"><JobTrustSignals job={job} variant="full" /></div>
             <div className="mb-8">
               <JobIntelligencePanel job={job} user={store.user} />
             </div>
@@ -166,11 +165,30 @@ export default function JobDetail() {
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                 <CheckCircle className="w-4 h-4 text-white" />
               </div>
-              About the Role
+              Job role
             </h3>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-8">
+            <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
               {job.description}
             </p>
+            <div className="my-6 grid gap-4 lg:grid-cols-3">
+              <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[#155eef]">What you will own</p>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+                  {job.responsibilities.slice(0, 3).map((responsibility) => <li key={responsibility} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#155eef]" />{responsibility}</li>)}
+                </ul>
+              </article>
+              <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[#155eef]">Success profile</p>
+                <p className="mt-3 text-sm leading-6 text-slate-600">This {job.experience.toLowerCase()} role prioritizes {job.skillsRequired.slice(0, 3).join(', ')} and clear evidence of delivery.</p>
+                <p className="mt-3 text-xs font-bold text-slate-500">First priorities: {job.requirements.slice(0, 2).join(' · ')}</p>
+              </article>
+              <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-[#155eef]">Team & working model</p>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{job.workplaceType} · {job.type}<br />{job.companyIndustry} · {job.companySize}</p>
+                <p className="mt-3 text-xs font-bold text-slate-500">Based in {job.location}</p>
+              </article>
+            </div>
+            <div className="mb-8"><JobTrustSignals job={job} variant="full" /></div>
 
             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center">

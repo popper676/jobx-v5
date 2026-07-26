@@ -36,7 +36,7 @@ export interface Job {
   connectionsAtCompany?: number; // "3 connections work here"
 }
 
-export const MOCK_JOBS: Job[] = [
+const CORE_JOBS: Job[] = [
   {
     id: "1",
     title: "Senior React Engineer",
@@ -396,3 +396,117 @@ export const MOCK_JOBS: Job[] = [
   }
 ];
 
+type ExpandedJobSeed = readonly [
+  company: string,
+  title: string,
+  industry: string,
+  location: string,
+  workplaceType: Job['workplaceType'],
+  experience: Job['experience'],
+  tags: readonly [string, string, string],
+];
+
+const EXPANDED_JOB_SEEDS: ExpandedJobSeed[] = [
+  ['Lumen Systems', 'Platform Engineer', 'Cloud Communications', 'Seattle, WA', 'Hybrid', 'Senior', ['Kubernetes', 'Go', 'Observability']],
+  ['Orbit Commerce', 'Product Analyst', 'E-commerce', 'Toronto, Canada', 'Remote', 'Mid Level', ['SQL', 'Funnels', 'Experimentation']],
+  ['Northstar Labs', 'Accessibility Designer', 'Product Design', 'Portland, OR', 'Remote', 'Mid Level', ['Accessibility', 'Figma', 'Research']],
+  ['Arc Studio', 'Brand Designer', 'Creative Services', 'Los Angeles, CA', 'Hybrid', 'Mid Level', ['Brand Systems', 'Figma', 'Art Direction']],
+  ['WaveLab', 'Operations Designer', 'Logistics Technology', 'Singapore', 'Hybrid', 'Senior', ['Service Design', 'Operations', 'Prototyping']],
+  ['BrightLedger', 'FinOps Analyst', 'Financial Technology', 'London, UK', 'Hybrid', 'Mid Level', ['FinOps', 'AWS', 'Cost Analytics']],
+  ['Cedar Health', 'Clinical Product Manager', 'Health Technology', 'Boston, MA', 'Hybrid', 'Senior', ['Product Strategy', 'Healthcare', 'Analytics']],
+  ['ParcelPilot', 'Logistics Data Engineer', 'Supply Chain Software', 'Chicago, IL', 'On-site', 'Mid Level', ['Python', 'Airflow', 'Snowflake']],
+  ['NovaGrid', 'Renewable Energy Analyst', 'Clean Energy', 'Austin, TX', 'Hybrid', 'Entry Level', ['Energy Modeling', 'Excel', 'Data Visualization']],
+  ['SignalNest', 'Customer Success Manager', 'B2B Software', 'Remote', 'Remote', 'Senior', ['Customer Success', 'SaaS', 'Retention']],
+  ['HarborPay', 'Fraud Analyst', 'Payments', 'New York, NY', 'Hybrid', 'Mid Level', ['Fraud Detection', 'SQL', 'Risk']],
+  ['PixelFoundry', 'Mobile Engineer', 'Mobile Products', 'Berlin, Germany', 'Remote', 'Mid Level', ['React Native', 'TypeScript', 'Mobile UX']],
+  ['QuantumLeaf', 'Research Engineer', 'Applied Research', 'Zurich, Switzerland', 'On-site', 'Senior', ['Python', 'Algorithms', 'Prototyping']],
+  ['MeadowWorks', 'Sustainability Manager', 'Environmental Services', 'Vancouver, Canada', 'Hybrid', 'Senior', ['ESG', 'Reporting', 'Program Management']],
+  ['AtlasRoute', 'Solutions Architect', 'Enterprise Software', 'Dubai, UAE', 'Hybrid', 'Senior', ['Architecture', 'Cloud', 'Customer Discovery']],
+  ['CopperCloud', 'Site Reliability Engineer', 'Cloud Infrastructure', 'Denver, CO', 'Remote', 'Senior', ['SRE', 'Terraform', 'Incident Response']],
+  ['CivicData', 'Business Intelligence Developer', 'Public Data', 'Washington, DC', 'Hybrid', 'Mid Level', ['Power BI', 'SQL', 'Data Modeling']],
+  ['FrameShift', 'Motion Designer', 'Digital Media', 'Paris, France', 'Remote', 'Mid Level', ['Motion Design', 'After Effects', 'Storytelling']],
+  ['KeenSearch', 'SEO Strategist', 'Marketing Technology', 'Manchester, UK', 'Remote', 'Mid Level', ['SEO', 'Content Strategy', 'Analytics']],
+  ['RelayWorks', 'Integration Engineer', 'Workflow Automation', 'Dublin, Ireland', 'Hybrid', 'Mid Level', ['APIs', 'Node.js', 'Integrations']],
+  ['BluePeak', 'Security Engineer', 'Cybersecurity', 'San Diego, CA', 'On-site', 'Senior', ['Cloud Security', 'SIEM', 'Threat Modeling']],
+  ['TerraFoods', 'Supply Chain Analyst', 'Food Technology', 'Amsterdam, Netherlands', 'Hybrid', 'Entry Level', ['Supply Chain', 'Forecasting', 'Excel']],
+  ['MindSpring', 'Learning Designer', 'Education Technology', 'Remote', 'Remote', 'Mid Level', ['Instructional Design', 'LMS', 'Facilitation']],
+  ['ClearVoice', 'Content Strategist', 'Content Technology', 'Atlanta, GA', 'Remote', 'Senior', ['Content Strategy', 'Research', 'Editorial']],
+  ['VectorForge', 'Machine Learning Engineer', 'Artificial Intelligence', 'San Jose, CA', 'Hybrid', 'Senior', ['Python', 'PyTorch', 'MLOps']],
+  ['OpenHarbor', 'Community Manager', 'Developer Platforms', 'Remote', 'Remote', 'Mid Level', ['Community', 'Events', 'Developer Relations']],
+  ['LanternAI', 'AI Product Manager', 'Artificial Intelligence', 'San Francisco, CA', 'Hybrid', 'Senior', ['AI Products', 'Roadmaps', 'Evaluation']],
+  ['Mono Engineering', 'TypeScript Engineer', 'Developer Tools', 'Helsinki, Finland', 'Remote', 'Mid Level', ['TypeScript', 'Node.js', 'Developer Experience']],
+  ['Greenhouse Network', 'Climate Program Lead', 'Climate Technology', 'Copenhagen, Denmark', 'Hybrid', 'Senior', ['Climate Programs', 'Partnerships', 'Impact Measurement']],
+  ['BeaconCRM', 'Revenue Operations Manager', 'Sales Technology', 'New York, NY', 'Hybrid', 'Senior', ['Revenue Operations', 'CRM', 'Forecasting']],
+  ['Alpine Robotics', 'Robotics Software Engineer', 'Robotics', 'Munich, Germany', 'On-site', 'Senior', ['C++', 'ROS', 'Computer Vision']],
+  ['OceanByte', 'QA Automation Engineer', 'Software Quality', 'Lisbon, Portugal', 'Remote', 'Mid Level', ['Playwright', 'Automation', 'JavaScript']],
+  ['SummitLegal', 'Legal Operations Analyst', 'Legal Technology', 'London, UK', 'Hybrid', 'Mid Level', ['Legal Operations', 'Process Design', 'Analytics']],
+  ['HelioBank', 'Mobile Product Designer', 'Digital Banking', 'Madrid, Spain', 'Hybrid', 'Mid Level', ['Mobile Design', 'Figma', 'FinTech']],
+  ['FreightFox', 'Backend Engineer', 'Freight Technology', 'Memphis, TN', 'Remote', 'Mid Level', ['Go', 'PostgreSQL', 'Distributed Systems']],
+  ['KindredCare', 'UX Researcher', 'Care Technology', 'Melbourne, Australia', 'Hybrid', 'Mid Level', ['UX Research', 'Interviews', 'Synthesis']],
+  ['PrismMedia', 'Growth Analyst', 'Media Technology', 'Los Angeles, CA', 'Hybrid', 'Entry Level', ['Growth Analytics', 'SQL', 'A/B Testing']],
+  ['SolarStack', 'Cloud Engineer', 'Energy Software', 'Phoenix, AZ', 'Remote', 'Senior', ['AWS', 'Terraform', 'Kubernetes']],
+  ['MapleHR', 'People Analytics Specialist', 'Human Resources Technology', 'Montreal, Canada', 'Hybrid', 'Mid Level', ['People Analytics', 'SQL', 'Tableau']],
+  ['Skylane Aerospace', 'Aerospace Systems Engineer', 'Aerospace', 'Toulouse, France', 'On-site', 'Senior', ['Systems Engineering', 'Simulation', 'Safety']],
+];
+
+const LOGO_COLORS = ['bg-blue-600', 'bg-violet-600', 'bg-emerald-600', 'bg-cyan-600', 'bg-rose-600', 'bg-amber-600', 'bg-indigo-600', 'bg-teal-600'];
+const COMPANY_SIZES = ['11–50 employees', '51–200 employees', '201–500 employees', '501–1,000 employees'];
+
+const EXPANDED_JOBS: Job[] = EXPANDED_JOB_SEEDS.map((seed, index) => {
+  const [company, title, industry, location, workplaceType, experience, seedTags] = seed;
+  const tags = [...seedTags];
+  const salaryMin = 78_000 + (index % 9) * 9_000;
+  const salaryMax = salaryMin + 28_000;
+  const initials = company.split(/\s+/).map((word) => word[0]).join('').slice(0, 2).toUpperCase();
+
+  return {
+    id: String(index + 11),
+    title,
+    company,
+    location,
+    type: index % 11 === 0 ? 'Contract' : 'Full-time',
+    workplaceType,
+    experience,
+    salary: `$${Math.round(salaryMin / 1_000)}k – $${Math.round(salaryMax / 1_000)}k`,
+    salaryMin,
+    salaryMax,
+    salaryCurrency: 'USD',
+    salaryPeriod: 'year',
+    tags,
+    skillsRequired: [...tags, 'Cross-functional Collaboration', 'Clear Communication'],
+    description: `${company} is hiring a ${title} to own meaningful work across its ${industry.toLowerCase()} products and services. You will turn customer and business needs into reliable outcomes, collaborate with a multidisciplinary team, and improve how the organization measures quality and impact.`,
+    requirements: [
+      `Demonstrated experience relevant to a ${experience.toLowerCase()} ${title} role`,
+      `Hands-on capability with ${tags[0]} and ${tags[1]}`,
+      'Clear written and verbal communication across technical and non-technical teams',
+      'Evidence of shipping work, improving a process, or influencing a measurable outcome',
+      'Comfort working through ambiguity and documenting important decisions',
+    ],
+    responsibilities: [
+      `Own planning and delivery for priority ${title.toLowerCase()} initiatives`,
+      `Apply ${tags[0]} and ${tags[1]} to solve practical customer problems`,
+      'Partner with product, design, engineering, operations, and commercial stakeholders',
+      'Define success measures, review results, and communicate progress clearly',
+      'Improve team standards, documentation, and repeatable ways of working',
+    ],
+    benefits: ['Comprehensive health coverage', 'Flexible paid time off', 'Learning and development budget', `${workplaceType} work support`, 'Inclusive parental leave'],
+    companyOverview: `${company} builds modern solutions in ${industry.toLowerCase()}. Its teams combine customer insight, responsible technology, and measurable delivery to help organizations work more effectively.`,
+    companySize: COMPANY_SIZES[index % COMPANY_SIZES.length],
+    companyIndustry: industry,
+    companyFounded: String(2008 + (index % 15)),
+    postedAt: `${index % 6 + 1} day${index % 6 === 0 ? '' : 's'} ago`,
+    postedDate: `2026-07-${String(26 - (index % 20)).padStart(2, '0')}`,
+    logoInitials: initials,
+    logoColor: LOGO_COLORS[index % LOGO_COLORS.length],
+    matchScore: 45 + (index * 7) % 51,
+    easyApply: index % 4 !== 0,
+    applicants: 14 + (index * 17) % 190,
+    recruiterName: `${['Maya', 'Daniel', 'Priya', 'Lucas', 'Sofia'][index % 5]} ${['Chen', 'Okafor', 'Patel', 'Martin', 'Garcia'][index % 5]}`,
+    recruiterTitle: 'Talent Partner',
+    promoted: index % 5 === 0,
+    activelyRecruiting: index % 6 !== 0,
+    connectionsAtCompany: index % 7,
+  };
+});
+
+export const MOCK_JOBS: Job[] = [...CORE_JOBS, ...EXPANDED_JOBS];

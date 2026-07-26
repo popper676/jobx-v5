@@ -16,7 +16,13 @@ describe('jobFilterService', () => {
       experienceLevels: ['Mid Level' as const, 'Senior' as const],
     };
 
-    expect(filterJobs(MOCK_JOBS, filters).map((job) => job.id)).toEqual(['2', '5']);
+    const result = filterJobs(MOCK_JOBS, filters);
+    expect(result.map((job) => job.id)).toEqual(expect.arrayContaining(['2', '5']));
+    expect(result.every((job) => (
+      job.workplaceType === 'Remote'
+      && job.type === 'Full-time'
+      && ['Mid Level', 'Senior'].includes(job.experience)
+    ))).toBe(true);
   });
 
   it('filters salary using the annualized maximum for hourly and salaried roles', () => {
