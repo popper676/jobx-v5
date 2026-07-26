@@ -65,7 +65,7 @@ export function getCareerCoachPlan(user: User, jobs: Job[], completedIds = getCo
       detail: prioritySkill
         ? `Add a truthful project, result, or learning milestone that demonstrates ${prioritySkill}.`
         : 'List the skills you want employers to see and connect each one to an outcome or project.',
-      href: '/projects',
+      href: '/community-projects',
       ctaLabel: 'Add project proof',
     },
     {

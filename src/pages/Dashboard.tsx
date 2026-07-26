@@ -100,8 +100,8 @@ export default function Dashboard() {
               <Link to="/profile?edit=true" className="product-focus inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/15">
                 <BadgeCheck className="h-4 w-4 text-blue-200" /> Strengthen my profile
               </Link>
-              <Link to="/missions" className="product-focus inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-blue-300/30 bg-blue-400/15 px-4 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-blue-400/25">
-                <Trophy className="h-4 w-4 text-blue-200" /> Missions & tests
+              <Link to="/projects" className="product-focus inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-blue-300/30 bg-blue-400/15 px-4 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-blue-400/25">
+                <Trophy className="h-4 w-4 text-blue-200" /> Projects & tests
               </Link>
             </div>
           </div>

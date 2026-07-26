@@ -80,7 +80,7 @@ export default function ProjectDetail() {
   }, [id]);
 
   if (!selectedProject) {
-    return <div className="max-w-5xl mx-auto w-full py-16 text-center"><h1 className="text-2xl font-extrabold text-gray-900">Project not found</h1><p className="mt-2 text-sm text-gray-500">This project may have been removed or is not available in this browser.</p><Link to="/projects" className="mt-5 inline-flex text-sm font-bold text-[#014BAA] hover:underline">Back to Projects</Link></div>;
+    return <div className="max-w-5xl mx-auto w-full py-16 text-center"><h1 className="text-2xl font-extrabold text-gray-900">Project not found</h1><p className="mt-2 text-sm text-gray-500">This project may have been removed or is not available in this browser.</p><Link to="/community-projects" className="mt-5 inline-flex text-sm font-bold text-[#014BAA] hover:underline">Back to Community Projects</Link></div>;
   }
 
   const project = {
@@ -129,8 +129,8 @@ export default function ProjectDetail() {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <Link to="/projects" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 mb-6 transition-colors">
-          <ChevronLeft className="w-4 h-4" /> Back to Projects
+        <Link to="/community-projects" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 mb-6 transition-colors">
+          <ChevronLeft className="w-4 h-4" /> Back to Community Projects
         </Link>
       </motion.div>
 

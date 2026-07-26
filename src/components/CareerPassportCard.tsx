@@ -83,7 +83,7 @@ export default function CareerPassportCard({ user, jobs, compact = false, onUpda
           </button>
         ) : (
           <div className="mt-4 flex flex-wrap gap-4">
-            <Link to="/missions" className="product-focus inline-flex items-center gap-1.5 text-sm font-semibold text-[#155eef] hover:text-[#0c3e9e]">Earn verification <ArrowRight className="h-4 w-4" /></Link>
+            <Link to="/projects" className="product-focus inline-flex items-center gap-1.5 text-sm font-semibold text-[#155eef] hover:text-[#0c3e9e]">Earn verification <ArrowRight className="h-4 w-4" /></Link>
             <Link to="/profile?edit=true" className="product-focus inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-800">Update profile</Link>
           </div>
         )}

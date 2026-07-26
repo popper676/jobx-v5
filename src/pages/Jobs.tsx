@@ -125,7 +125,7 @@ export default function Jobs() {
               : <div className="p-7 text-center"><Bookmark className="mx-auto h-7 w-7 text-slate-300" /><p className="mt-2 text-sm font-bold text-slate-500">Save roles to review later</p></div>}
           </section>
 
-          <section className="rounded-[1.75rem] bg-[#082c58] p-5 text-white shadow-xl"><Sparkles className="h-5 w-5 text-blue-200" /><h2 className="mt-3 font-black">Build proof before applying</h2><p className="mt-1 text-xs leading-5 text-blue-100/80">Missions can strengthen your Career Passport and help employers see what you can do.</p><Link to="/missions" className="mt-4 inline-flex items-center gap-1.5 text-sm font-extrabold text-white">Explore missions <ArrowRight className="h-4 w-4" /></Link></section>
+          <section className="rounded-[1.75rem] bg-[#082c58] p-5 text-white shadow-xl"><Sparkles className="h-5 w-5 text-blue-200" /><h2 className="mt-3 font-black">Build proof before applying</h2><p className="mt-1 text-xs leading-5 text-blue-100/80">JobX missions can strengthen your Career Passport and help employers see what you can do.</p><Link to="/projects" className="mt-4 inline-flex items-center gap-1.5 text-sm font-extrabold text-white">Explore projects <ArrowRight className="h-4 w-4" /></Link></section>
         </aside>
       </div>
     </div>

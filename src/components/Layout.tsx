@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Briefcase, LayoutDashboard, FolderGit2, Settings, Bell, MessageSquare, LogOut, User, X, FileText, RefreshCw, Bot, Target, UsersRound } from 'lucide-react';
+import { Search, Briefcase, LayoutDashboard, FolderGit2, Settings, Bell, MessageSquare, LogOut, User, X, FileText, RefreshCw, Bot, UsersRound } from 'lucide-react';
 import { useStore } from '../store/StoreProvider';
 import { useRole } from '../context/RoleContext';
 import { MOCK_JOBS } from '../data';
@@ -75,7 +75,6 @@ export default function Layout() {
     { name: 'My Network', path: '/network', icon: <UsersRound className="w-5 h-5" /> },
     { name: 'Jobs', path: '/jobs', icon: <Briefcase className="w-5 h-5" /> },
     { name: 'Tracker', path: '/applications', icon: <FileText className="w-5 h-5" /> },
-    { name: 'Missions', path: '/missions', icon: <Target className="w-5 h-5" /> },
     { name: 'Projects', path: '/projects', icon: <FolderGit2 className="w-5 h-5" /> },
     { name: 'AI Assistant', path: '/career-coach', icon: <Bot className="w-5 h-5" /> },
     { name: 'Settings', path: '/settings', icon: <Settings className="w-5 h-5" /> },

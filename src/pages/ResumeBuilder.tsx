@@ -358,7 +358,7 @@ export default function ResumeBuilder() {
             </section>
             <section className="paper-section">
               <span className="paper-label">PROFESSIONAL SIGNAL / 05</span>
-              <div className="paper-signal-note"><BadgeCheck size={18} /><div><strong>Evidence-led JobX profile</strong><p>Skills and career outcomes are supported by profile evidence, employer missions, and verified contributions. Verification cannot be purchased.</p></div></div>
+              <div className="paper-signal-note"><BadgeCheck size={18} /><div><strong>Evidence-led JobX profile</strong><p>Skills and career outcomes are supported by profile evidence, JobX missions, and verified contributions. Verification cannot be purchased.</p></div></div>
             </section>
             <footer className="paper-footer"><span>JOBX CAREER PASSPORT</span><span>LIVE CANDIDATE DOCUMENT</span></footer>
           </article>

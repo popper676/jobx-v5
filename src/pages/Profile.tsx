@@ -446,7 +446,7 @@ export default function Profile() {
                 <div className="p-12 text-center">
                   <MessageSquare className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-gray-500 text-sm">You haven't shared any work yet.</p>
-                  <Link to="/projects" className="text-[#014BAA] hover:underline text-sm font-medium mt-2 inline-block">Showcase a project</Link>
+                  <Link to="/community-projects" className="text-[#014BAA] hover:underline text-sm font-medium mt-2 inline-block">Showcase a project</Link>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">

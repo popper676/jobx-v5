@@ -75,9 +75,10 @@ export default function App() {
               <Route path="applicants" element={<ViewApplicantsPage />} />
               <Route path="resume" element={<ResumeBuilder />} />
               <Route path="career-coach" element={<CareerCoach />} />
-              <Route path="projects" element={<Projects />} />
+              <Route path="projects" element={<ProofHub />} />
               <Route path="projects/:id" element={<ProjectDetail />} />
-              <Route path="missions" element={<ProofHub />} />
+              <Route path="community-projects" element={<Projects />} />
+              <Route path="missions" element={<Navigate to="/projects" replace />} />
               <Route path="tests" element={<ProofHub />} />
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />

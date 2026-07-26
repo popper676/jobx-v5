@@ -61,7 +61,7 @@ export default function SkillProofPanel({ user, projects, onAddSkills }: SkillPr
                     ))}
                   </div>
                 ) : (
-                  <Link to="/projects" className="product-focus mt-3 inline-flex items-center gap-1.5 text-xs font-extrabold text-[#155eef] hover:underline">Add project evidence <ArrowRight className="h-3.5 w-3.5" /></Link>
+                  <Link to="/community-projects" className="product-focus mt-3 inline-flex items-center gap-1.5 text-xs font-extrabold text-[#155eef] hover:underline">Add project evidence <ArrowRight className="h-3.5 w-3.5" /></Link>
                 )}
               </article>
             ))}
