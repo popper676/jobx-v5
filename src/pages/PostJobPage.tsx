@@ -468,12 +468,6 @@ export default function PostJobPage() {
                 <div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-[#014BAA] shadow-sm"><Shield className="w-4 h-4" /></span><div><p className="text-sm font-bold text-[#014BAA]">Response promise</p><p className="mt-1 text-xs leading-5 text-blue-700/75">Applicants will see a clear response window after you publish.</p></div></div>
               </div>
 
-              <div className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm">
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">Candidate preview</p>
-                <p className="mt-3 truncate text-sm font-bold text-gray-900">{form.title || 'Your job title'}</p>
-                <p className="mt-1 text-xs text-gray-500">{form.department || 'Department'} · {form.workplace}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">{form.skills.slice(0, 3).map((skill) => <span key={skill} className="rounded-md bg-blue-50 px-2 py-1 text-[10px] font-semibold text-[#014BAA]">{skill}</span>)}{form.skills.length === 0 && <span className="text-xs text-gray-400">Your skills will show here</span>}</div>
-              </div>
             </div>
           </aside>
 

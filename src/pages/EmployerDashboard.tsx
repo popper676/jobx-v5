@@ -325,7 +325,6 @@ const EMPLOYER_SHORTCUTS = [
   { label: 'Candidate folders', href: '/employer/candidates', icon: Folder },
   { label: 'Messages', href: '/messages', icon: Mail },
   { label: 'Interview center', href: '/employer/interviews', icon: Video },
-  { label: 'Activity rates', href: '/employer/rates', icon: BarChart3 },
   { label: 'Hiring analytics', href: '/employer/analytics', icon: BarChart3 },
   { label: 'Challenges & hackathons', href: '/employer/challenges', icon: Trophy },
 ];

@@ -67,7 +67,6 @@ export default function App() {
               <Route path="employer/ai-tools" element={<EmployerAITools />} />
               <Route path="employer/candidates" element={<EmployerCandidates />} />
               <Route path="employer/candidates/:id" element={<EmployerCandidateProfile />} />
-              <Route path="employer/rates" element={<EmployerOperations />} />
               <Route path="employer/analytics" element={<EmployerOperations />} />
               <Route path="employer/challenges" element={<EmployerOperations />} />
               <Route path="employer/interviews" element={<EmployerInterviewCenter />} />
