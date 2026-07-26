@@ -95,46 +95,49 @@ export default function EmployerDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8F3F0]/80 pb-14">
-      <header className="border-b border-slate-200/80 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-6 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
-          <div>
-            <Link to="/employer/settings" className="group mb-5 inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2.5 pr-4 shadow-sm transition hover:border-[#173b67] hover:shadow-md">
-              <span className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-[#12213a] text-sm font-black tracking-wide text-white shadow-sm">
+      <header className="bg-transparent px-4 pt-6 sm:px-6 lg:px-8">
+        <div className="relative mx-auto flex max-w-7xl flex-col gap-7 overflow-hidden rounded-[2rem] bg-[#12213a] px-6 py-7 text-white shadow-[0_24px_70px_rgba(18,33,58,0.20)] sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:px-10 lg:py-9">
+          <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-[#214f91] opacity-70 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-0 left-1/3 h-32 w-96 bg-[#f3a6be]/10 blur-3xl" />
+          <div className="relative">
+            <Link to="/employer/settings" className="group mb-7 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 p-2.5 pr-4 shadow-lg backdrop-blur-md transition duration-300 hover:-translate-y-1 hover:border-[#b7ff3c]/60 hover:bg-white/15">
+              <span className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-white text-sm font-black tracking-wide text-[#12213a] shadow-sm">
                 TC
-                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-[#b7ff3c] text-[#12213a]"><ShieldCheck className="h-3 w-3" /></span>
+                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#12213a] bg-[#b7ff3c] text-[#12213a]"><ShieldCheck className="h-3 w-3" /></span>
               </span>
               <span>
-                <span className="flex items-center gap-2"><strong className="text-base font-black text-slate-950">TechCorp Inc.</strong><span className="rounded-full bg-lime-50 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-wide text-green-700">Verified</span></span>
-                <span className="mt-0.5 block text-xs font-semibold text-slate-500">Software & Technology · Remote-first</span>
+                <span className="flex items-center gap-2"><strong className="text-base font-black text-white">TechCorp Inc.</strong><span className="rounded-full bg-[#b7ff3c] px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-wide text-[#12213a]">Verified</span></span>
+                <span className="mt-0.5 block text-xs font-semibold text-slate-300">Software & Technology · Remote-first</span>
               </span>
             </Link>
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#014BAA]">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#b7ff3c]">
               TechCorp recruiting workspace
             </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Hiring overview
+            <h1 className="mt-2 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">
+              Build your strongest team.
             </h1>
-            <p className="mt-1.5 text-sm text-slate-500">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
               {pendingApps.length > 0
-                ? `${pendingApps.length} candidate${pendingApps.length === 1 ? '' : 's'} waiting for a response.`
+                ? `${pendingApps.length} candidate${pendingApps.length === 1 ? '' : 's'} need a response. Keep every hiring decision clear, timely, and evidence-led.`
                 : 'Your response queue is all caught up.'}
             </p>
+            <div className="mt-5 flex flex-wrap gap-4 text-xs font-bold text-slate-300"><span><strong className="mr-1 text-lg text-white">{MOCK_STATS.activeJobs}</strong> active roles</span><span className="h-6 w-px bg-white/15" /><span><strong className="mr-1 text-lg text-[#b7ff3c]">{responseRate}%</strong> response health</span><span className="h-6 w-px bg-white/15" /><span><strong className="mr-1 text-lg text-white">{WEEKLY_APPLICANTS}</strong> applicants this week</span></div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative flex flex-wrap items-center gap-2.5">
             <button
               type="button"
               onClick={refreshData}
               disabled={isRefreshing}
               aria-busy={isRefreshing}
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-600 transition-colors hover:border-blue-200 hover:text-[#014BAA] disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 text-sm font-bold text-white backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:bg-white/15 disabled:cursor-wait disabled:opacity-60"
             >
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? 'Refreshing' : 'Refresh'}
             </button>
             <Link
               to="/applicants"
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3.5 text-sm font-semibold text-[#014BAA] transition-colors hover:border-blue-200 hover:bg-blue-100/70"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/15 bg-white px-4 text-sm font-bold text-[#173b67] shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-slate-50"
             >
               Response inbox
               {pendingApps.length > 0 && (
@@ -146,7 +149,7 @@ export default function EmployerDashboard() {
             <button
               type="button"
               onClick={() => navigate('/post-job')}
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#014BAA] px-4 text-sm font-semibold text-white shadow-sm shadow-blue-900/15 transition-colors hover:bg-[#013b86]"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#b7ff3c] px-5 text-sm font-black text-[#12213a] shadow-[0_10px_25px_rgba(183,255,60,0.18)] transition duration-300 hover:-translate-y-0.5 hover:bg-[#c5ff65]"
             >
               <Plus className="h-4 w-4" />
               Post a job
