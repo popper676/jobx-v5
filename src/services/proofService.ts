@@ -1,6 +1,6 @@
 import { db } from './db';
 
-export type ProofType = 'mission' | 'test' | 'challenge';
+export type ProofType = 'mission' | 'challenge';
 export type ProofDifficulty = 'Beginner' | 'Intermediate' | 'Advanced';
 
 export interface ProofOpportunity {
@@ -38,28 +38,24 @@ export const PROOF_OPPORTUNITIES: ProofOpportunity[] = [
   { id: 'challenge-open-source', type: 'challenge', title: 'Open-source contribution sprint', employer: 'JobX', employerInitials: 'JX', description: 'Improve documentation, fix an issue, or review a pull request in a participating open-source project.', skill: 'Collaboration', difficulty: 'Beginner', duration: 'Flexible', points: 6, participants: 872, deadline: 'Always open', featured: true },
   { id: 'challenge-data-story', type: 'challenge', title: 'Tell a story with public data', employer: 'JobX', employerInitials: 'JX', description: 'Explore an open dataset and publish a concise visual story that makes one useful insight understandable.', skill: 'Data Visualization', difficulty: 'Intermediate', duration: 'Weekend', points: 8, participants: 413, deadline: '14 days left' },
   { id: 'challenge-climate', type: 'challenge', title: 'Climate product design jam', employer: 'JobX', employerInitials: 'JX', description: 'Join a small team, define a climate behavior problem, and contribute to a tested solution concept.', skill: 'Team Contribution', difficulty: 'Intermediate', duration: '1 week', points: 9, participants: 265, deadline: 'Starts Monday' },
-  { id: 'test-react', type: 'test', title: 'React practical assessment', employer: 'Mono Engineering', employerInitials: 'ME', description: 'Debug, refactor, and extend a small React interface. Your reasoning and code quality both count.', skill: 'React', difficulty: 'Intermediate', duration: '45 min', points: 7, participants: 1240, deadline: 'On demand', featured: true },
-  { id: 'test-typescript', type: 'test', title: 'TypeScript systems test', employer: 'Northstar Labs', employerInitials: 'NS', description: 'Model a domain, eliminate unsafe states, and explain the trade-offs in your implementation.', skill: 'TypeScript', difficulty: 'Advanced', duration: '60 min', points: 9, participants: 735, deadline: 'On demand' },
-  { id: 'test-product', type: 'test', title: 'Product thinking simulation', employer: 'Orbit Commerce', employerInitials: 'OC', description: 'Prioritize competing customer problems and turn ambiguous evidence into a focused product decision.', skill: 'Product Strategy', difficulty: 'Intermediate', duration: '35 min', points: 6, participants: 896, deadline: 'On demand' },
-  { id: 'test-data', type: 'test', title: 'SQL insight challenge', employer: 'Lumen Systems', employerInitials: 'LS', description: 'Query a realistic product dataset and communicate the decisions your findings support.', skill: 'SQL', difficulty: 'Intermediate', duration: '40 min', points: 7, participants: 1084, deadline: 'On demand' },
-  { id: 'test-ux', type: 'test', title: 'UX decision review', employer: 'Arc Studio', employerInitials: 'AS', description: 'Evaluate interface options against research evidence, usability principles, and business constraints.', skill: 'UX Research', difficulty: 'Beginner', duration: '25 min', points: 5, participants: 654, deadline: 'On demand' },
 ];
 
 export const proofService = {
   getProgress(): ProofProgress {
     const saved = db.get<Partial<ProofProgress>>('proof_progress', EMPTY_PROGRESS);
+    const supportedIds = new Set(PROOF_OPPORTUNITIES.map((opportunity) => opportunity.id));
     return {
-      completedIds: saved.completedIds || [],
-      inProgressIds: saved.inProgressIds || [],
-      certificates: (saved.certificates || []).map((certificate) => {
+      completedIds: (saved.completedIds || []).filter((id) => supportedIds.has(id)),
+      inProgressIds: (saved.inProgressIds || []).filter((id) => supportedIds.has(id)),
+      certificates: (saved.certificates || []).flatMap((certificate) => {
         const opportunity = PROOF_OPPORTUNITIES.find((item) => item.id === certificate.opportunityId);
-        if (!opportunity || opportunity.type === 'test') return certificate;
+        if (!opportunity) return [];
 
-        return {
+        return [{
           ...certificate,
           employer: 'JobX',
           credentialId: `JX-JX-${opportunity.id.slice(-5).toUpperCase()}-${new Date(certificate.issuedAt).getFullYear()}`,
-        };
+        }];
       }),
     };
   },

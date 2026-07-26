@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Bot, BriefcaseBusiness, CheckCircle2, FileSearch, FileText, Gauge, Map, MessageSquareText, PenLine, RotateCcw, Send, Sparkles, Target } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, Bot, CheckCircle2, FileCheck2, FileText, Map, MessageSquareText, PenLine, RotateCcw, Send, Sparkles, Target, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { db } from '../services/db';
+import { formatResumeFileSize, readResumeText, validateResumeFile } from '../services/resumeUploadService';
 
 type Roadmap = {
   role: string;
@@ -12,6 +13,16 @@ type Roadmap = {
   steps: Array<{ title: string; detail: string; skills: string[] }>;
   questions: string[];
 };
+
+const SHARED_INTERVIEW_QUESTIONS = [
+  'Tell me about a time priorities changed suddenly. How did you respond?',
+  'Describe a mistake you made, what you learned, and what you changed afterward.',
+  'How have you handled disagreement with a stakeholder or teammate?',
+  'Tell me about an ambiguous problem you turned into a clear plan.',
+  'How do you protect quality when a deadline is under pressure?',
+  'Describe feedback that changed the way you work.',
+  'What would you prioritize in your first 90 days as a {role}?',
+];
 
 const ROADMAPS: Roadmap[] = [
   ['Full Stack Developer', 'Engineering', '6–9 months', 'High', 'Build reliable products across frontend, backend, data, and deployment.', ['Web foundations|Master semantic HTML, modern CSS, JavaScript, Git, and accessibility.|HTML,CSS,JavaScript,Git', 'Frontend systems|Build typed React applications with testing and state management.|React,TypeScript,Testing', 'Backend APIs|Design secure APIs, authentication, and database models.|Node.js,REST,SQL', 'Cloud delivery|Containerize, deploy, monitor, and automate delivery.|Docker,AWS,CI/CD', 'Portfolio proof|Ship two production-quality projects and document trade-offs.|Architecture,Documentation,Collaboration'], ['Tell me about a full-stack feature you owned end to end.', 'How would you design an authenticated API that handles rapid growth?', 'Describe a production incident and how you diagnosed it.']],
@@ -27,13 +38,16 @@ const ROADMAPS: Roadmap[] = [
 ].map(([role, category, duration, demand, summary, rawSteps, questions]) => ({
   role: role as string, category: category as string, duration: duration as string, demand: demand as string, summary: summary as string,
   steps: (rawSteps as string[]).map((step) => { const [title, detail, skillList] = step.split('|'); return { title, detail, skills: skillList.split(',') }; }),
-  questions: questions as string[],
+  questions: [
+    ...(questions as string[]),
+    ...SHARED_INTERVIEW_QUESTIONS.map((question) => question.replace('{role}', role as string)),
+  ],
 }));
 
 const PROGRESS_KEY = 'ai_assistant_roadmap_progress';
 
 export default function CareerCoach() {
-  const [mode, setMode] = useState<'roadmap' | 'interview' | 'resume' | 'match' | 'application' | 'skills'>('roadmap');
+  const [mode, setMode] = useState<'roadmap' | 'interview' | 'resume' | 'application'>('roadmap');
   const [selectedRole, setSelectedRole] = useState(ROADMAPS[0].role);
   const [completed, setCompleted] = useState<string[]>(() => db.get<string[]>(PROGRESS_KEY, []));
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -63,18 +77,16 @@ export default function CareerCoach() {
       <div className="product-shell max-w-7xl">
         <Link to="/dashboard" className="product-button-secondary mb-5"><ArrowLeft className="h-4 w-4" />Back to workspace</Link>
         <header className="overflow-hidden rounded-3xl bg-[#12213a] p-7 text-white sm:p-9">
-          <div className="flex flex-wrap items-start justify-between gap-6"><div className="max-w-3xl"><p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#b7ff3c]"><Sparkles className="h-4 w-4" />Personal career intelligence</p><h1 className="mt-4 text-4xl font-black tracking-[-0.04em] sm:text-5xl">AI Assistant for your career</h1><p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">Plan your next role, strengthen your evidence, practice interviews, improve applications, and understand job fit from one focused workspace.</p></div><span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/10 ring-1 ring-white/20"><Bot className="h-9 w-9 text-[#b7ff3c]" /></span></div>
+          <div className="flex flex-wrap items-start justify-between gap-6"><div className="max-w-3xl"><p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[#b7ff3c]"><Sparkles className="h-4 w-4" />Personal career intelligence</p><h1 className="mt-4 text-4xl font-black tracking-[-0.04em] sm:text-5xl">AI Assistant for your career</h1><p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">Plan your next role, upload and improve your resume, practice deeper interviews, and prepare truthful applications from one focused workspace.</p></div><span className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/10 ring-1 ring-white/20"><Bot className="h-9 w-9 text-[#b7ff3c]" /></span></div>
           <div className="mt-7 flex flex-wrap gap-3 text-xs font-bold text-slate-200"><span className="rounded-full bg-white/10 px-3 py-2">Career Passport aware</span><span className="rounded-full bg-white/10 px-3 py-2">Role-specific coaching</span><span className="rounded-full bg-white/10 px-3 py-2">Evidence-first guidance</span><span className="rounded-full bg-white/10 px-3 py-2">Progress saved</span></div>
         </header>
 
-        <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {[
             ['roadmap', 'Career roadmap', 'Build a phased learning plan.', <Map />],
-            ['interview', 'AI interview', 'Practice role questions.', <MessageSquareText />],
-            ['resume', 'Resume copilot', 'Improve impact and clarity.', <FileText />],
-            ['match', 'Job-match analyst', 'Explain fit and gaps.', <FileSearch />],
+            ['interview', 'AI interview', 'Practice 10 role questions.', <MessageSquareText />],
+            ['resume', 'Resume copilot', 'Upload and improve your resume.', <FileText />],
             ['application', 'Application writer', 'Draft tailored responses.', <PenLine />],
-            ['skills', 'Skills-gap planner', 'Prioritize proof to build.', <Gauge />],
           ].map(([key, title, detail, icon]) => <button key={key as string} onClick={() => setMode(key as typeof mode)} className={`product-surface product-card-interactive p-4 text-left ${mode === key ? 'ring-2 ring-[#173b67]' : ''}`}><span className={`flex h-10 w-10 items-center justify-center rounded-xl [&>svg]:h-5 [&>svg]:w-5 ${mode === key ? 'bg-[#173b67] text-[#b7ff3c]' : 'bg-[#edf2f7] text-[#173b67]'}`}>{icon}</span><strong className="mt-3 block text-sm text-slate-900">{title}</strong><small className="mt-1 block leading-5 text-slate-500">{detail}</small></button>)}
         </section>
 
@@ -93,7 +105,7 @@ export default function CareerCoach() {
         ) : mode === 'interview' ? (
           <section className="product-surface mt-5 overflow-hidden">
             <div className="grid lg:grid-cols-[18rem_minmax(0,1fr)]">
-              <aside className="border-b border-slate-200 bg-slate-50 p-5 lg:border-b-0 lg:border-r"><p className="product-eyebrow">Interview plan</p><h2 className="mt-3 text-xl font-black">{roadmap.role}</h2><p className="mt-2 text-sm text-slate-500">{questionIndex + 1} of {roadmap.questions.length} questions</p><div className="mt-5 space-y-2">{roadmap.questions.map((question, index) => <button key={question} onClick={() => { setQuestionIndex(index); setAnswer(''); setFeedback(null); }} className={`flex w-full items-center gap-3 rounded-xl p-3 text-left text-sm font-bold ${questionIndex === index ? 'bg-[#173b67] text-white' : 'bg-white text-slate-600'}`}><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">{index + 1}</span><span className="line-clamp-2">{question}</span></button>)}</div></aside>
+              <aside className="border-b border-slate-200 bg-slate-50 p-5 lg:border-b-0 lg:border-r"><p className="product-eyebrow">Interview plan</p><h2 className="mt-3 text-xl font-black">{roadmap.role}</h2><p className="mt-2 text-sm text-slate-500">{questionIndex + 1} of {roadmap.questions.length} questions</p><div className="mt-5 max-h-[36rem] space-y-2 overflow-y-auto pr-1">{roadmap.questions.map((question, index) => <button key={question} onClick={() => { setQuestionIndex(index); setAnswer(''); setFeedback(null); }} className={`flex w-full items-center gap-3 rounded-xl p-3 text-left text-sm font-bold ${questionIndex === index ? 'bg-[#173b67] text-white' : 'bg-white text-slate-600'}`}><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-current text-xs">{index + 1}</span><span className="line-clamp-2">{question}</span></button>)}</div></aside>
               <div className="p-5 sm:p-8"><div className="flex items-start gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#173b67] text-[#b7ff3c]"><Bot className="h-6 w-6" /></span><div><p className="text-xs font-black uppercase tracking-[0.1em] text-slate-400">AI interviewer</p><h2 className="mt-1 text-xl font-black leading-7 text-slate-950">{roadmap.questions[questionIndex]}</h2></div></div><label className="mt-7 block"><span className="text-sm font-extrabold text-slate-700">Your answer</span><textarea value={answer} onChange={(event) => setAnswer(event.target.value)} rows={8} placeholder="Answer naturally. Include context, your decisions, actions, and a measurable result where possible." className="mt-2 w-full rounded-xl border border-slate-200 p-4 text-sm leading-6 outline-none focus:border-[#173b67] focus:ring-4 focus:ring-[#173b67]/10" /></label><div className="mt-4 flex flex-wrap gap-3"><button disabled={answer.trim().length < 20} onClick={evaluateAnswer} className="product-button-primary disabled:cursor-not-allowed disabled:opacity-40"><Send className="h-4 w-4" />Get AI feedback</button><button onClick={() => { setAnswer(''); setFeedback(null); }} className="product-button-secondary"><RotateCcw className="h-4 w-4" />Start again</button></div>{feedback && <div className="mt-6 rounded-2xl border border-[#b7ff3c] bg-[#f2ffd9] p-5"><div className="flex items-center justify-between"><span className="inline-flex items-center gap-2 text-sm font-black text-[#24451c]"><Sparkles className="h-4 w-4" />Interview feedback</span><strong className="text-2xl font-black text-[#173b67]">{feedback.score}/100</strong></div><p className="mt-3 text-sm leading-6 text-slate-700">{feedback.text}</p><button onClick={() => { setQuestionIndex((questionIndex + 1) % roadmap.questions.length); setAnswer(''); setFeedback(null); }} className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold text-[#173b67]">Next question <ArrowRight className="h-4 w-4" /></button></div>}</div>
             </div>
           </section>
@@ -103,21 +115,121 @@ export default function CareerCoach() {
   );
 }
 
-function CandidateAITool({ mode, role, roadmap }: { mode: 'resume' | 'match' | 'application' | 'skills'; role: string; roadmap: Roadmap }) {
+function CandidateAITool({ mode, role, roadmap }: { mode: 'resume' | 'application'; role: string; roadmap: Roadmap }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [input, setInput] = useState(mode === 'resume' ? 'Built and maintained web applications for customers.' : '');
   const [job, setJob] = useState(`${role} role requiring collaboration, measurable delivery, and strong ${roadmap.steps[0].skills.slice(0, 2).join(' and ')} skills.`);
   const [generated, setGenerated] = useState(false);
-  const titles = {
-    resume: ['Resume copilot', 'Turn responsibilities into concise, evidence-backed impact statements.', <FileText className="h-5 w-5" />],
-    match: ['Job-match analyst', 'Compare a role with your Career Passport and explain strengths, gaps, and next steps.', <FileSearch className="h-5 w-5" />],
-    application: ['Application writer', 'Draft a tailored, truthful response grounded in your demonstrated work.', <PenLine className="h-5 w-5" />],
-    skills: ['Skills-gap planner', 'Prioritize the smallest set of skills and proof that will improve readiness.', <Gauge className="h-5 w-5" />],
-  } as const;
-  const [title, copy, icon] = titles[mode];
-  return <section className="product-surface mt-5 overflow-hidden"><div className="border-b border-slate-100 p-6"><div className="flex items-start gap-4"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#fcf0f5] text-[#173b67]">{icon}</span><div><h2 className="text-xl font-black text-slate-950">{title}</h2><p className="mt-1 text-sm text-slate-500">{copy}</p></div></div></div><div className="grid gap-6 p-6 lg:grid-cols-2"><div>
-    {mode !== 'skills' && <label className="block"><span className="text-xs font-black uppercase tracking-wider text-slate-500">{mode === 'resume' ? 'Current resume statement' : mode === 'application' ? 'Your relevant experience' : 'Your experience or profile summary'}</span><textarea value={input} onChange={(event) => setInput(event.target.value)} rows={6} placeholder="Add truthful experience, outcomes, and examples…" className="mt-2 w-full rounded-xl border border-slate-200 p-4 text-sm leading-6 outline-none focus:border-[#173b67]" /></label>}
-    {mode !== 'resume' && mode !== 'skills' && <label className="mt-4 block"><span className="text-xs font-black uppercase tracking-wider text-slate-500">Target opportunity</span><textarea value={job} onChange={(event) => setJob(event.target.value)} rows={5} className="mt-2 w-full rounded-xl border border-slate-200 p-4 text-sm leading-6 outline-none focus:border-[#173b67]" /></label>}
-    {mode === 'skills' && <div className="rounded-2xl bg-slate-50 p-5"><p className="text-xs font-black uppercase tracking-wider text-slate-500">Selected destination</p><h3 className="mt-2 text-xl font-black">{role}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{roadmap.summary}</p></div>}
-    <button onClick={() => setGenerated(true)} className="product-button-primary mt-5"><Sparkles className="h-4 w-4" />Generate guidance</button>
-  </div><div>{generated ? <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700"><p className="text-xs font-black uppercase tracking-wider text-[#173b67]">AI recommendation</p>{mode === 'resume' && <><h3 className="mt-3 font-black text-slate-950">Improved impact statement</h3><p className="mt-2">Delivered and maintained customer-facing web experiences, partnering across product and engineering to improve reliability, accessibility, and release quality. Add a verified metric—such as users served, performance gained, or delivery time reduced—to make this stronger.</p></>}{mode === 'match' && <><h3 className="mt-3 font-black text-slate-950">78% role alignment</h3><p className="mt-2"><strong>Strong signals:</strong> transferable delivery experience, collaboration, and relevant foundations.</p><p className="mt-2"><strong>Evidence gap:</strong> show one measurable outcome using {roadmap.steps[1].skills.slice(0, 2).join(' and ')}.</p><p className="mt-2"><strong>Next action:</strong> complete a targeted mission and attach the verified result to your Career Passport.</p></>}{mode === 'application' && <><h3 className="mt-3 font-black text-slate-950">Tailored application response</h3><p className="mt-2">I’m interested in this {role} opportunity because it combines practical delivery with thoughtful collaboration. My experience includes the work described above, and I’m continuing to build verified evidence through role-specific projects. I would welcome the opportunity to discuss the decisions, contributions, and results behind that work.</p></>}{mode === 'skills' && <><h3 className="mt-3 font-black text-slate-950">Priority development plan</h3>{roadmap.steps.slice(0, 3).map((step, index) => <div key={step.title} className="mt-4 border-t border-slate-200 pt-3"><strong>{index + 1}. {step.title}</strong><p>{step.detail}</p><p className="text-xs font-bold text-[#173b67]">{step.skills.join(' · ')}</p></div>)}</>}</div> : <div className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center"><Bot className="h-9 w-9 text-slate-300" /><p className="mt-4 max-w-sm text-sm text-slate-500">Provide your context and generate personalized, evidence-first guidance.</p></div>}</div></div></section>;
+  const [uploadedResume, setUploadedResume] = useState<{ name: string; size: number } | null>(null);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const wordCount = input.trim().split(/\s+/).filter(Boolean).length;
+  const metricCount = (input.match(/\b\d+(?:[.,]\d+)?(?:%|\+|x)?\b/g) || []).length;
+  const hasActionLanguage = /\b(built|created|delivered|designed|developed|drove|improved|increased|launched|led|optimized|reduced|shipped)\b/i.test(input);
+
+  const handleResumeUpload = async (file: File | undefined) => {
+    if (!file) return;
+    setGenerated(false);
+    const error = validateResumeFile(file);
+    if (error) {
+      setUploadedResume(null);
+      setUploadMessage(null);
+      setUploadError(error);
+      return;
+    }
+
+    setUploadedResume({ name: file.name, size: file.size });
+    setUploadError(null);
+    try {
+      const importedText = await readResumeText(file);
+      if (importedText) {
+        setInput(importedText);
+        setUploadMessage('Resume text imported and ready for Copilot review.');
+      } else {
+        setUploadMessage('Resume uploaded. Paste the section you want rewritten below for line-by-line guidance.');
+      }
+    } catch {
+      setUploadMessage(null);
+      setUploadError('The resume was selected, but its text could not be read. Try a TXT version or paste the content below.');
+    }
+  };
+
+  const title = mode === 'resume' ? 'Resume copilot' : 'Application writer';
+  const copy = mode === 'resume'
+    ? 'Upload your resume, review its evidence signals, and strengthen unclear statements.'
+    : 'Draft a tailored, truthful response grounded in your demonstrated work.';
+  const icon = mode === 'resume' ? <FileText className="h-5 w-5" /> : <PenLine className="h-5 w-5" />;
+  return (
+    <section className="product-surface mt-5 overflow-hidden">
+      <div className="border-b border-slate-100 p-6">
+        <div className="flex items-start gap-4"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#fcf0f5] text-[#173b67]">{icon}</span><div><h2 className="text-xl font-black text-slate-950">{title}</h2><p className="mt-1 text-sm text-slate-500">{copy}</p></div></div>
+      </div>
+      <div className="grid gap-6 p-6 lg:grid-cols-2">
+        <div>
+          {mode === 'resume' && (
+            <div className="mb-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                className="sr-only"
+                aria-label="Upload resume"
+                onChange={(event) => {
+                  void handleResumeUpload(event.target.files?.[0]);
+                  event.currentTarget.value = '';
+                }}
+              />
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-[#173b67] shadow-sm">{uploadedResume ? <FileCheck2 className="h-5 w-5" /> : <Upload className="h-5 w-5" />}</span>
+                  <div>
+                    <p className="text-sm font-black text-slate-900">{uploadedResume ? uploadedResume.name : 'Upload your resume'}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{uploadedResume ? formatResumeFileSize(uploadedResume.size) : 'PDF, DOC, DOCX, or TXT · maximum 5 MB'}</p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="product-button-secondary shrink-0"><Upload className="h-4 w-4" />{uploadedResume ? 'Replace file' : 'Choose file'}</button>
+              </div>
+              {uploadMessage && <p role="status" className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold leading-5 text-emerald-700">{uploadMessage}</p>}
+              {uploadError && <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold leading-5 text-red-700">{uploadError}</p>}
+            </div>
+          )}
+
+          <label className="block">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-500">{mode === 'resume' ? 'Resume content or statement' : 'Your relevant experience'}</span>
+            <textarea value={input} onChange={(event) => { setInput(event.target.value); setGenerated(false); }} rows={8} placeholder="Add truthful experience, outcomes, and examples…" className="mt-2 w-full rounded-xl border border-slate-200 p-4 text-sm leading-6 outline-none focus:border-[#173b67]" />
+          </label>
+          {mode === 'application' && <label className="mt-4 block"><span className="text-xs font-black uppercase tracking-wider text-slate-500">Target opportunity</span><textarea value={job} onChange={(event) => { setJob(event.target.value); setGenerated(false); }} rows={5} className="mt-2 w-full rounded-xl border border-slate-200 p-4 text-sm leading-6 outline-none focus:border-[#173b67]" /></label>}
+          <button disabled={input.trim().length < 20} onClick={() => setGenerated(true)} className="product-button-primary mt-5 disabled:cursor-not-allowed disabled:opacity-40"><Sparkles className="h-4 w-4" />{mode === 'resume' ? 'Review resume' : 'Generate guidance'}</button>
+        </div>
+
+        <div>
+          {generated ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-700">
+              <p className="text-xs font-black uppercase tracking-wider text-[#173b67]">AI recommendation</p>
+              {mode === 'resume' ? (
+                <>
+                  <h3 className="mt-3 font-black text-slate-950">{uploadedResume ? `${uploadedResume.name} review` : 'Resume statement review'}</h3>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                    <span className="rounded-xl bg-white p-3"><strong className="block text-lg text-[#173b67]">{wordCount}</strong><small className="text-slate-500">Words reviewed</small></span>
+                    <span className="rounded-xl bg-white p-3"><strong className="block text-lg text-[#173b67]">{metricCount}</strong><small className="text-slate-500">Metrics found</small></span>
+                    <span className="rounded-xl bg-white p-3"><strong className="block text-lg text-[#173b67]">{hasActionLanguage ? 'Yes' : 'No'}</strong><small className="text-slate-500">Action language</small></span>
+                  </div>
+                  <h4 className="mt-5 font-black text-slate-950">Copilot guidance</h4>
+                  <p className="mt-2">{hasActionLanguage ? 'Your resume uses clear ownership language. ' : 'Start key bullets with a concrete action verb. '}{metricCount ? 'Keep the measurable results and connect each one to the action that produced it.' : 'Add a truthful measure such as scope, users served, time saved, quality gained, or delivery speed.'}</p>
+                  <p className="mt-3 rounded-xl bg-white p-4"><strong>Stronger pattern:</strong> Delivered [specific work] using [method or tool], resulting in [truthful measurable outcome].</p>
+                </>
+              ) : (
+                <>
+                  <h3 className="mt-3 font-black text-slate-950">Tailored application response</h3>
+                  <p className="mt-2">I’m interested in this {role} opportunity because it combines practical delivery with thoughtful collaboration. My experience includes the work described above, and I’m continuing to build verified evidence through role-specific projects. I would welcome the opportunity to discuss the decisions, contributions, and results behind that work.</p>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center"><Bot className="h-9 w-9 text-slate-300" /><p className="mt-4 max-w-sm text-sm text-slate-500">{mode === 'resume' ? 'Upload a resume or paste its content to receive evidence-focused feedback.' : 'Provide your context and generate personalized, evidence-first guidance.'}</p></div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
 }

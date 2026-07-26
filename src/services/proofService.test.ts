@@ -6,7 +6,7 @@ describe('proof opportunities', () => {
   beforeEach(() => db.clear());
 
   it('attributes every project mission and challenge to JobX', () => {
-    const projectOpportunities = PROOF_OPPORTUNITIES.filter((item) => item.type !== 'test');
+    const projectOpportunities = PROOF_OPPORTUNITIES;
 
     expect(projectOpportunities.length).toBeGreaterThan(0);
     expect(projectOpportunities.every((item) => item.employer === 'JobX')).toBe(true);
@@ -34,5 +34,29 @@ describe('proof opportunities', () => {
       employer: 'JobX',
       credentialId: 'JX-JX-ILITY-2026',
     }));
+  });
+
+  it('removes saved employer skill-test progress', () => {
+    db.set('proof_progress', {
+      completedIds: ['test-react', 'mission-accessibility'],
+      inProgressIds: ['test-data'],
+      certificates: [{
+        id: 'certificate-test-react',
+        opportunityId: 'test-react',
+        title: 'React practical assessment',
+        employer: 'Mono Engineering',
+        skill: 'React',
+        points: 7,
+        issuedAt: '2026-07-20T00:00:00.000Z',
+        credentialId: 'JX-ME-REACT-2026',
+        submissionSummary: 'Historical employer test.',
+      }],
+    });
+
+    expect(proofService.getProgress()).toEqual({
+      completedIds: ['mission-accessibility'],
+      inProgressIds: [],
+      certificates: [],
+    });
   });
 });

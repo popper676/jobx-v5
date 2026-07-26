@@ -79,7 +79,7 @@ export default function App() {
               <Route path="projects/:id" element={<ProjectDetail />} />
               <Route path="community-projects" element={<Projects />} />
               <Route path="missions" element={<Navigate to="/projects" replace />} />
-              <Route path="tests" element={<ProofHub />} />
+              <Route path="tests" element={<Navigate to="/projects" replace />} />
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="messages" element={<Messages />} />
