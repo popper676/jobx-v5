@@ -172,6 +172,23 @@ const existingJobs = [
   { id: 'e4', title: 'DevOps Engineer' },
 ];
 
+function InputField({ label, required, children, error, helpText }: {
+  label: string; required?: boolean; children: React.ReactNode; error?: string; helpText?: string;
+}) {
+  return <div className="space-y-1.5">
+    <label className="flex items-center gap-1 text-sm font-semibold text-gray-700">
+      {label}{required && <span className="text-red-400">*</span>}
+    </label>
+    {children}
+    {error && (
+      <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="mt-1 flex items-center gap-1 text-xs text-red-500">
+        <AlertCircle className="h-3 w-3 shrink-0" />{error}
+      </motion.p>
+    )}
+    {helpText && !error && <p className="mt-1 text-xs text-gray-400">{helpText}</p>}
+  </div>;
+}
+
 export default function PostJobPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -395,24 +412,6 @@ export default function PostJobPage() {
     setShowDraftModal(false);
     navigate('/my-posts');
   };
-
-  // ===== RENDER HELPERS =====
-  const InputField = ({ label, required, children, error, helpText }: {
-    label: string; required?: boolean; children: React.ReactNode; error?: string; helpText?: string;
-  }) => (
-    <div className="space-y-1.5">
-      <label className="flex items-center gap-1 text-sm font-semibold text-gray-700">
-        {label}{required && <span className="text-red-400">*</span>}
-      </label>
-      {children}
-      {error && (
-        <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="text-xs text-red-500 flex items-center gap-1 mt-1">
-          <AlertCircle className="w-3 h-3 shrink-0" />{error}
-        </motion.p>
-      )}
-      {helpText && !error && <p className="text-xs text-gray-400 mt-1">{helpText}</p>}
-    </div>
-  );
 
   return (
     <div className="job-post-page min-h-screen bg-[#F8F3F0]/80 pb-20">
