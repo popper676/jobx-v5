@@ -33,6 +33,7 @@ const EmployerCandidates = lazy(() => import('./pages/EmployerCandidates'));
 const EmployerCandidateProfile = lazy(() => import('./pages/EmployerCandidateProfile'));
 const EmployerOperations = lazy(() => import('./pages/EmployerOperations'));
 const EmployerInterviewCenter = lazy(() => import('./pages/EmployerInterviewCenter'));
+const MyNetwork = lazy(() => import('./pages/MyNetwork'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const store = useStore();
@@ -59,6 +60,7 @@ export default function App() {
               <Route path="jobs/:id" element={<JobDetail />} />
               <Route path="companies/:companyName" element={<CompanyProfile />} />
               <Route path="dashboard" element={<Dashboard />} />
+              <Route path="network" element={<MyNetwork />} />
               <Route path="applications" element={<ApplicationsPage />} />
               <Route path="employer" element={<EmployerDashboard />} />
               <Route path="employer/settings" element={<EmployerSettingsPage />} />
